@@ -167,7 +167,7 @@
 			};
 			buildConfigurationList = BD2C1142203DF47200D922B6 /* Build configuration list for PBXProject "psautohintexe" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
