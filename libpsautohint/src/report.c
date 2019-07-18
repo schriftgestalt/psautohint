@@ -198,10 +198,12 @@ ShowHVal(HintVal* val)
     seg = val->vSeg2;
     l2 = seg->sMin;
     r2 = seg->sMax;
+#if LOGDEBUG
     LogMsg(LOGDEBUG, OK, "b %g t %g v %g s %g%s l1 %g r1 %g  l2 %g r2 %g",
            FixToDbl(bot), FixToDbl(top), VAL(val->vVal), FixToDbl(val->vSpc),
            val->vGhst ? " G" : "", FixToDbl(l1), FixToDbl(r1), FixToDbl(l2),
            FixToDbl(r2));
+#endif
 }
 
 void
@@ -246,9 +248,11 @@ ShowVVal(HintVal* val)
     seg = val->vSeg2;
     b2 = -seg->sMin;
     t2 = -seg->sMax;
+#if LOGDEBUG
     LogMsg(LOGDEBUG, OK, "l %g r %g v %g s %g b1 %g t1 %g  b2 %g t2 %g",
            FixToDbl(lft), FixToDbl(rht), VAL(val->vVal), FixToDbl(val->vSpc),
            FixToDbl(b1), FixToDbl(t1), FixToDbl(b2), FixToDbl(t2));
+#endif
 }
 
 void
