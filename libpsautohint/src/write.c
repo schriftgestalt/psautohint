@@ -194,21 +194,21 @@ WritePointItem(HintPoint* lst)
         case 'v':
             WriteOne(lst->y0);
             WriteOne(lst->y1 - lst->y0);
-            sws(((lst->c == 'b') ? "rb" : "rv"));
+            sws(((lst->c == 'b') ? "hstem" : "rv"));
             break;
         case 'y':
         case 'm':
             WriteOne(lst->x0);
             WriteOne(lst->x1 - lst->x0);
-            sws(((lst->c == 'y') ? "ry" : "rm"));
+            sws(((lst->c == 'y') ? "vstem" : "rm"));
             break;
         default: {
             LogMsg(LOGERROR, NONFATALERROR, "Illegal point list data.");
         }
     }
-    sws(" % ");
-    SWRTNUM(lst->p0 != NULL ? lst->p0->count : 0);
-    SWRTNUM(lst->p1 != NULL ? lst->p1->count : 0);
+//    sws(" % ");
+//    SWRTNUM(lst->p0 != NULL ? lst->p0->count : 0);
+//    SWRTNUM(lst->p1 != NULL ? lst->p1->count : 0);
     sws("\n");
 }
 
@@ -275,9 +275,9 @@ wrtnewhints(PathElt* e)
     hintmaskstr[0] = '\0';
     WrtPntLst(gPtLstArray[e->newhints]);
     if (strcmp(prevhintmaskstr, hintmaskstr)) {
-        WriteString("beginsubr snc\n");
+        WriteString("4 callsubr\n");
         WriteString(hintmaskstr);
-        WriteString("endsubr enc\nnewcolors\n");
+        //WriteString("endsubr enc\nnewcolors\n");
         strcpy(prevhintmaskstr, hintmaskstr);
     }
 }
@@ -308,13 +308,13 @@ mt(Cd c, PathElt* e)
     } else {
         if (FRnd(c.y) == currenty) {
             wrtx(c.x);
-            WriteString("hmt\n");
+            WriteString("hmoveto\n");
         } else if (FRnd(c.x) == currentx) {
             wrty(c.y);
-            WriteString("vmt\n");
+            WriteString("vmoveto\n");
         } else {
             wrtcd(c);
-            WriteString("rmt\n");
+            WriteString("rmoveto\n");
         }
     }
 }
@@ -330,14 +330,14 @@ dt(Cd c, PathElt* e)
         WriteString("dt\n");
     } else {
         if (FRnd(c.y) == currenty) {
-            wrtxa(c.x);
-            WriteString("hdt\n");
+            wrtx(c.x);
+            WriteString("hlineto\n");
         } else if (FRnd(c.x) == currentx) {
-            wrtya(c.y);
-            WriteString("vdt\n");
+            wrty(c.y);
+            WriteString("vlineto\n");
         } else {
-            wrtcda(c);
-            WriteString("rdt\n");
+            wrtcd(c);
+            WriteString("rlineto\n");
         }
     }
 }
@@ -346,12 +346,12 @@ static Fixed flX, flY;
 static Cd fc1, fc2, fc3;
 
 #define wrtpreflx2(c)                                                          \
-wrtcda(c);                                                                  \
-WriteString("rmt\npreflx2\n")
+    wrtcd(c);                                                                  \
+WriteString("rmoveto\n2 callsubr\n")
 
 #define wrtpreflx2a(c)                                                         \
-wrtcda(c);                                                                 \
-WriteString("rmt\npreflx2a\n")
+    wrtcda(c);                                                                 \
+    WriteString("rmt\npreflx2a\n")
 
 static void
 wrtflex(Cd c1, Cd c2, Cd c3, PathElt* e)
@@ -372,7 +372,7 @@ wrtflex(Cd c1, Cd c2, Cd c3, PathElt* e)
     yflag = e->yFlex;
     dmin = gDMin;
     delta = gDelta;
-    WriteString("preflx1\n");
+    WriteString("1 callsubr\n");
     if (yflag) {
         if (fc3.y == c3.y) {
             c13.y = c3.y;
@@ -406,7 +406,7 @@ wrtflex(Cd c1, Cd c2, Cd c3, PathElt* e)
         }
         c13.y = fc3.y;
     }
-    
+
     if (writeAbsolute) {
         wrtpreflx2a(c13);
         wrtpreflx2a(fc1);
@@ -439,18 +439,21 @@ wrtflex(Cd c1, Cd c2, Cd c3, PathElt* e)
         wrtpreflx2(c3);
         currentx = flX;
         currenty = flY;
-        wrtcd(fc1);
-        wrtcd(fc2);
-        wrtcd(fc3);
-        wrtcd(c1);
-        wrtcd(c2);
-        wrtcd(c3);
+//        wrtcd(fc1);
+//        wrtcd(fc2);
+//        wrtcd(fc3);
+//        wrtcd(c1);
+//        wrtcd(c2);
+//        wrtcd(c3);
+        currentx = c3.x;
+        currenty = c3.y;
         WRTNUM(dmin);
-        WRTNUM(delta);
-        WRTNUM(yflag);
+        //WRTNUM(delta);
+        //WRTNUM(yflag);
         WRTNUM(FTrunc(FRnd(currentx)));
         WRTNUM(FTrunc(FRnd(currenty)));
-        WriteString("flx\n");
+        WRTNUM(!yflag);
+        WriteString("callsubr\n");
     }
     firstFlex = true;
 }
@@ -473,17 +476,17 @@ ct(Cd c1, Cd c2, Cd c3, PathElt* e)
             wrty(c1.y);
             wrtcd(c2);
             wrtx(c3.x);
-            WriteString("vhct\n");
+            WriteString("vhcurveto\n");
         } else if ((FRnd(c1.y) == currenty) && (c2.x == c3.x)) {
             wrtx(c1.x);
             wrtcd(c2);
             wrty(c3.y);
-            WriteString("hvct\n");
+            WriteString("hvcurveto\n");
         } else {
             wrtcd(c1);
             wrtcd(c2);
             wrtcd(c3);
-            WriteString("rct\n");
+            WriteString("rrcurveto\n");
         }
     }
 }
@@ -494,7 +497,7 @@ cp(PathElt* e)
     if (e->newhints != 0) {
         wrtnewhints(e);
     }
-    WriteString("cp\n");
+    WriteString("closepath\n");
 }
 
 static void
@@ -516,7 +519,7 @@ SaveFile(void)
     PathElt* e = gPathStart;
     Cd c1, c2, c3;
 
-    WriteString("%% %s\n", gGlyphName);
+    //WriteString("%% %s\n", gGlyphName);
     wrtHintInfo = (gPathStart != NULL && gPathStart != gPathEnd);
     NumberPath();
     prevhintmaskstr[0] = '\0';
@@ -527,7 +530,7 @@ SaveFile(void)
         strcpy(prevhintmaskstr, hintmaskstr);
     }
 
-    WriteString("sc\n");
+    //WriteString("sc\n");
     firstFlex = true;
     currentx = currenty = 0;
     while (e != NULL) {
@@ -589,5 +592,5 @@ SaveFile(void)
 #endif
         e = e->next;
     }
-    WriteString("ed\n");
+    WriteString("endchar\n");
 }
