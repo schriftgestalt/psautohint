@@ -161,7 +161,8 @@
 				TargetAttributes = {
 					BD2C1146203DF47200D922B6 = {
 						CreatedOnToolsVersion = 8.2.1;
-						ProvisioningStyle = Automatic;
+						DevelopmentTeam = X2L8375ZQ7;
+						ProvisioningStyle = Manual;
 					};
 				};
 			};
@@ -308,14 +309,24 @@
 		BD2C114F203DF47200D922B6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Developer ID Application: Georg Seifert (X2L8375ZQ7)";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = X2L8375ZQ7;
+				GCC_DYNAMIC_NO_PIC = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
 		BD2C1150203DF47200D922B6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Developer ID Application: Georg Seifert (X2L8375ZQ7)";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = X2L8375ZQ7;
+				GCC_DYNAMIC_NO_PIC = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
 		};
