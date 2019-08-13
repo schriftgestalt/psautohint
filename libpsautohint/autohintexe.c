@@ -445,8 +445,11 @@ main(int argc, char* argv[])
             }
 
             ACBufferFree(output);
-            if (result != AC_Success)
+            if (result != AC_Success) {
+                if (verbose)
+                    printf("2 result != AC_Success %d", result);
                 exit(result);
+            }
         }
     } else /* assume files are MM bez files */
     {
@@ -477,9 +480,11 @@ main(int argc, char* argv[])
 
         result = AutoHintString(inGlyphs[0], fontinfo, hintedGlyph, allowEdit,
                                 allowHintSub, roundCoords);
-        if (result != AC_Success)
+        if (result != AC_Success) {
+            if (verbose)
+                printf("0 result != AC_Success %d", result);
             exit(result);
-
+        }
         free(inGlyphs[0]);
         {
             char* data;
@@ -502,8 +507,11 @@ main(int argc, char* argv[])
         free(inGlyphs);
         free(outGlyphs);
         free(masters);
-        if (result != AC_Success)
+        if (result != AC_Success) {
+            if (verbose)
+                printf("1 result != AC_Success %d", result);
             exit(result);
+        }
     }
 
     if (fontInfoFileName)
