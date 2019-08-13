@@ -48,18 +48,19 @@ static void
 wrtx(Fixed x)
 {
     Fixed i;
-    if ((gRoundToInt) || (FracPart(x) == 0)) {
-        Fixed dx;
+    Fixed dx = x - currentx;
+    if (gRoundToInt || (FracPart(dx) == 0)) {
         i = FRnd(x);
         dx = i - currentx;
         WRTNUM(FTrunc(dx));
         currentx = i;
     } else {
         float r;
-        i = x - currentx;
         currentx = x;
-        r = (float)FIXED2FLOAT(i);
-        WRTRNUM(r);
+        r = (float)FIXED2FLOAT(dx);
+        r *= 100.0;
+        WRTNUM(r);
+        WriteString("100 div ");
     }
 }
 
