@@ -20,7 +20,6 @@
 #include "logging.h"
 #include "memory.h"
 
-
 /* widely used definitions */
 
 /* values for HintSeg.sType */
@@ -50,45 +49,55 @@
 /* glyph point coordinates */
 typedef struct {
    Fixed x, y;
-   } Cd;
+} Cd;
+
+typedef struct _hintseg {
+    struct _hintseg *sNxt;
+    /* points to next HintSeg in list */
+    /* separate lists for top, bottom, left, and right segments */
+    Fixed sLoc, sMax, sMin;
+    /* sLoc is X loc for vertical seg, Y loc for horizontal seg */
+    /* sMax and sMin give Y extent for vertical seg, X extent for horizontal */
+    /* i.e., sTop=sMax, sBot=sMin, sLft=sMin, sRght=sMax. */
+    Fixed sBonus;
+    /* nonzero for segments in sol-eol subpaths */
+    /* (probably a leftover that is no longer needed) */
+    struct _hintval *sLnk;
+    /* points to the best HintVal that uses this HintSeg */
+    /* set by FindBestValForSegs in pick.c */
+    struct _pthelt *sElt;
+    /* points to the path element that generated this HintSeg */
+    /* set by AddSegment in gen.c */
+    int16_t sType;
+    /* tells what type of segment this is: sLINE sBEND sCURVE or sGHOST */
+} HintSeg;
+
+typedef struct {
+    HintSeg* seg;
+} SegLnk;
+
+typedef struct _seglnklst {
+    struct _seglnklst *next;
+    SegLnk* lnk;
+} SegLnkLst;
+
+typedef struct _pthelt {
+    struct _pthelt *prev, *next, *conflict;
+    int16_t type;
+    SegLnkLst *Hs, *Vs;
+    bool Hcopy:1, Vcopy:1, isFlex:1, yFlex:1, newCP:1;
+    int unused:9;
+    int16_t count, newhints;
+    Fixed x, y, x1, y1, x2, y2, x3, y3;
+} PathElt;
 
 typedef struct {
   int16_t limit;
   Fixed feps;
-  void (*report)(Cd);
+  void (*report)(Cd, PathElt*);
   Cd ll, ur;
   Fixed llx, lly;
   } FltnRec;
-
-typedef struct _hintseg {
-  struct _hintseg *sNxt;
-    /* points to next HintSeg in list */
-    /* separate lists for top, bottom, left, and right segments */
-  Fixed sLoc, sMax, sMin;
-    /* sLoc is X loc for vertical seg, Y loc for horizontal seg */
-    /* sMax and sMin give Y extent for vertical seg, X extent for horizontal */
-    /* i.e., sTop=sMax, sBot=sMin, sLft=sMin, sRght=sMax. */
-  Fixed sBonus;
-    /* nonzero for segments in sol-eol subpaths */
-    /* (probably a leftover that is no longer needed) */
-  struct _hintval *sLnk;
-    /* points to the best HintVal that uses this HintSeg */
-    /* set by FindBestValForSegs in pick.c */
-  struct _pthelt *sElt;
-    /* points to the path element that generated this HintSeg */
-    /* set by AddSegment in gen.c */
-  int16_t sType;
-    /* tells what type of segment this is: sLINE sBEND sCURVE or sGHOST */
-  } HintSeg;
-
-typedef struct {
-  HintSeg* seg;
-  } SegLnk;
-
-typedef struct _seglnklst {
-  struct _seglnklst *next;
-  SegLnk* lnk;
-  } SegLnkLst;
 
 #if 0
 typedef struct _hintrep {
@@ -137,15 +146,7 @@ typedef struct _hintval {
   } HintVal;
 #endif
 
-typedef struct _pthelt {
-  struct _pthelt *prev, *next, *conflict;
-  int16_t type;
-  SegLnkLst *Hs, *Vs;
-  bool Hcopy:1, Vcopy:1, isFlex:1, yFlex:1, newCP:1;
-  int unused:9;
-  int16_t count, newhints;
-  Fixed x, y, x1, y1, x2, y2, x3, y3;
-  } PathElt;
+
 
 typedef struct _hintpnt {
   struct _hintpnt *next;
@@ -167,23 +168,23 @@ typedef struct {
 
 /* global data */
 
-extern ACBuffer* gBezOutput;
-
-extern PathElt* gPathStart, *gPathEnd;
-extern bool gUseV, gUseH, gAutoLinearCurveFix;
-extern bool gEditGlyph; /* whether glyph can be modified when adding hints */
-extern bool gBandError;
-extern bool gHasFlex, gFlexOK, gFlexStrict;
-extern Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth,
-  gGhostLength, gBendLength, gBandMargin, gMaxFlare,
-  gMaxBendMerge, gMaxMerge, gMinHintElementLength, gFlexCand;
-extern Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
-extern float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
-extern int32_t gDMin, gDelta, gCPpercent, gBendTan, gSCurveTan;
-extern HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
-extern HintSeg* gSegLists[4]; /* left, right, top, bot */
-extern HintPoint* gPointList, **gPtLstArray;
-extern int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
+//extern ACBuffer* gBezOutput;
+//
+//extern PathElt* gPathStart, *gPathEnd;
+//extern bool gUseV, gUseH, gAutoLinearCurveFix;
+//extern bool gEditGlyph; /* whether glyph can be modified when adding hints */
+//extern bool gBandError;
+//extern bool gHasFlex, gFlexOK, gFlexStrict;
+//extern Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth,
+//  gGhostLength, gBendLength, gBandMargin, gMaxFlare,
+//  gMaxBendMerge, gMaxMerge, gMinHintElementLength, gFlexCand;
+//extern Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
+//extern float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
+//extern int32_t gDMin, gDelta, gCPpercent, gBendTan, gSCurveTan;
+//extern HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
+//extern HintSeg* gSegLists[4]; /* left, right, top, bot */
+//extern HintPoint* gPointList, **gPtLstArray;
+//extern int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
 
 /* global callbacks */
 
@@ -280,7 +281,7 @@ bool VHintGlyph(void);
 bool HHintGlyph(void);
 bool NoBlueGlyph(void);
 bool MoveToNewHints(void);
-bool GetInflectionPoint(Fixed, Fixed, Fixed, Fixed, Fixed, Fixed, Fixed, Fixed, Fixed *);
+bool GetInflectionPoint(Fixed, Fixed, Fixed, Fixed, Fixed, Fixed, Fixed, Fixed, Fixed *, PathElt* eM);
 void CheckSmooth(void);
 void CheckBBoxEdge(PathElt* e, bool vrt, Fixed lc, Fixed* pf, Fixed* pl);
 bool CheckSmoothness(Fixed x0, Fixed cy0, Fixed x1, Fixed cy1, Fixed x2,
@@ -291,16 +292,16 @@ void AddHintPoint(Fixed x0, Fixed y0, Fixed x1, Fixed y1, char ch, PathElt* p0,
 void AddHPair(HintVal* v, char ch);
 void AddVPair(HintVal* v, char ch);
 void XtraHints(PathElt* e);
-bool AutoHintGlyph(const char* srcglyph, bool extrahint);
+bool AutoHintGlyph(const char* srcglyph, bool extrahint, PathElt* eM);
 void EvalV(void);
 void EvalH(void);
-void GenVPts(int32_t specialGlyphType);
+void GenVPts(int32_t specialGlyphType, PathElt* eM);
 void CheckTfmVal(HintSeg* hSegList, Fixed* bandList, int32_t length);
 void CheckVals(HintVal* vlst, bool vert);
 bool FindLineSeg(Fixed loc, HintSeg* sL);
-void FltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr);
+void FltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr, PathElt* eM);
 bool InBlueBand(Fixed loc, int32_t n, Fixed* p);
-void GenHPts(void);
+void GenHPts(PathElt* eM);
 void PreGenPts(void);
 PathElt* GetDest(PathElt* cldest);
 PathElt* GetClosedBy(PathElt* clsdby);
@@ -335,8 +336,8 @@ void PickVVals(HintVal* gValList);
 void PickHVals(HintVal* gValList);
 void FindBestHVals(void);
 void FindBestVVals(void);
-void ReportAddFlex(void);
-void ReportLinearCurve(PathElt* e, Fixed x0, Fixed y0, Fixed x1, Fixed y1);
+void ReportAddFlex(bool *gHasFlex);
+//void ReportLinearCurve(PathElt* e, Fixed x0, Fixed y0, Fixed x1, Fixed y1);
 void ReportNonHError(Fixed x0, Fixed y0, Fixed x1, Fixed y1);
 void ReportNonVError(Fixed x0, Fixed y0, Fixed x1, Fixed y1);
 void ExpectedMoveTo(PathElt* e);
@@ -370,7 +371,7 @@ void ReportMergeVVal(Fixed l0, Fixed r0, Fixed l1, Fixed r1, Fixed v0, Fixed s0,
                      Fixed v1, Fixed s1);
 void ReportPruneHVal(HintVal* val, HintVal* v, int32_t i);
 void ReportPruneVVal(HintVal* val, HintVal* v, int32_t i);
-void InitShuffleSubpaths(void);
+void InitShuffleSubpaths(PathElt* eM);
 void MarkLinks(HintVal* vL, bool hFlg);
 void DoShuffleSubpaths(void);
 void CopyMainH(void);
@@ -403,6 +404,6 @@ bool AutoHint(const ACFontInfo* fontinfo, const char* srcbezdata,
               bool extrahint, bool changeGlyph, bool roundCoords);
 
 bool MergeGlyphPaths(const char** srcglyphs, int nmasters,
-                     const char** masters, ACBuffer** outbuffers);
+                     const char** masters, ACBuffer** outbuffers, PathElt* eM);
 
 #endif /* AC_AC_H_ */

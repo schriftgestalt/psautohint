@@ -10,7 +10,7 @@
 #include "ac.h"
 
 static void
-FMiniFltn(Cd f0, Cd f1, Cd f2, Cd f3, FltnRec* pfr)
+FMiniFltn(Cd f0, Cd f1, Cd f2, Cd f3, FltnRec* pfr, PathElt* e)
 {
 /* Like FFltnCurve, but assumes abs(deltas) <= 127 pixels */
 /* 8 bits of fraction gives enough precision for splitting curves */
@@ -234,7 +234,7 @@ FMiniFltn(Cd f0, Cd f1, Cd f2, Cd f3, FltnRec* pfr)
             c.x = c3x + pfr->llx;
             c.y = c3y + pfr->lly;
         }
-        (*pfr->report)(c); /* call FPBBoxPt() to reset bbox. */
+        (*pfr->report)(c, e); /* call FPBBoxPt() to reset bbox. */
         if (dpth == 0)
             return;
         p -= MiniBlkSz;
@@ -284,7 +284,7 @@ FMiniFltn(Cd f0, Cd f1, Cd f2, Cd f3, FltnRec* pfr)
 /* abs values of coords must be < 2^14 so will not overflow when
    find midpoint by add and shift */
 static void
-FFltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr)
+FFltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr, PathElt* e)
 {
     Cd d0, d1, d2, d3;
     Fixed llx, lly, urx, ury;
@@ -339,27 +339,27 @@ FFltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr)
     }
     pfr->llx = llx;
     pfr->lly = lly;
-    FMiniFltn(c0, c1, c2, c3, pfr);
+    FMiniFltn(c0, c1, c2, c3, pfr, e);
     return;
 
 Split:
     /* Split the bez curve in half */
     FixedBezDiv(c0, c1, c2, c3, d0, d1, d2, d3);
     pfr->limit--;
-    FFltnCurve(c0, c1, c2, c3, pfr);
-    FFltnCurve(d0, d1, d2, d3, pfr);
+    FFltnCurve(c0, c1, c2, c3, pfr, e);
+    FFltnCurve(d0, d1, d2, d3, pfr, e);
     pfr->limit++;
     return;
 
 ReportC3:
-    (*pfr->report)(c3);
+    (*pfr->report)(c3, e);
 }
 
 void
-FltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr)
+FltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr, PathElt* e)
 {
     pfr->limit = 6; /* limit on how many times a bez curve can be split in half
                        by recursive calls to FFltnCurve() */
     pfr->feps = FixOne; /* DEBUG 8 BIT FIX */
-    FFltnCurve(c0, c1, c2, c3, pfr);
+    FFltnCurve(c0, c1, c2, c3, pfr, e);
 }

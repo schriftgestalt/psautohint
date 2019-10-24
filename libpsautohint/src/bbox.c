@@ -14,7 +14,7 @@ static Fixed xmin, ymin, xmax, ymax, vMn, vMx, hMn, hMx;
 static PathElt *pxmn, *pxmx, *pymn, *pymx, *pe, *pvMn, *pvMx, *phMn, *phMx;
 
 static void
-FPBBoxPt(Cd c)
+FPBBoxPt(Cd c, PathElt* eM)
 {
     if (c.x < xmin) {
         xmin = c.x;
@@ -57,7 +57,7 @@ FindPathBBox(void)
                 c0.x = e->x;
                 c0.y = e->y;
                 pe = e;
-                FPBBoxPt(c0);
+                FPBBoxPt(c0, eM);
                 break;
             case CURVETO:
                 c1.x = e->x1;
@@ -67,7 +67,7 @@ FindPathBBox(void)
                 c3.x = e->x3;
                 c3.y = e->y3;
                 pe = e;
-                FltnCurve(c0, c1, c2, c3, &fr);
+                FltnCurve(c0, c1, c2, c3, &fr, eM);
                 c0 = c3;
                 break;
             case CLOSEPATH:
@@ -115,7 +115,7 @@ FindSubpathBBox(PathElt* e)
                 c0.x = e->x;
                 c0.y = e->y;
                 pe = e;
-                FPBBoxPt(c0);
+                FPBBoxPt(c0, e);
                 break;
             case CURVETO:
                 c1.x = e->x1;
@@ -125,7 +125,7 @@ FindSubpathBBox(PathElt* e)
                 c3.x = e->x3;
                 c3.y = e->y3;
                 pe = e;
-                FltnCurve(c0, c1, c2, c3, &fr);
+                FltnCurve(c0, c1, c2, c3, &fr, e);
                 c0 = c3;
                 break;
             case CLOSEPATH:
@@ -154,7 +154,7 @@ done:
 void
 FindCurveBBox(Fixed x0, Fixed y0, Fixed px1, Fixed py1, Fixed px2, Fixed py2,
               Fixed x1, Fixed y1, Fixed* pllx, Fixed* plly, Fixed* purx,
-              Fixed* pury)
+              Fixed* pury, PathElt* eM)
 {
     FltnRec fr;
     Cd c0, c1, c2, c3;
@@ -169,8 +169,8 @@ FindCurveBBox(Fixed x0, Fixed y0, Fixed px1, Fixed py1, Fixed px2, Fixed py2,
     c2.y = py2;
     c3.x = x1;
     c3.y = y1;
-    FPBBoxPt(c0);
-    FltnCurve(c0, c1, c2, c3, &fr);
+    FPBBoxPt(c0, eM);
+    FltnCurve(c0, c1, c2, c3, &fr, eM);
     *pllx = FHalfRnd(xmin);
     *plly = FHalfRnd(ymin);
     *purx = FHalfRnd(xmax);

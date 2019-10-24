@@ -12,39 +12,39 @@
 
 #define MAXSTEMDIST 150 /* initial maximum stem width allowed for hints */
 
-PathElt *gPathStart, *gPathEnd;
-bool gUseV, gUseH, gAutoLinearCurveFix, gEditGlyph;
-bool gHasFlex, gFlexOK, gFlexStrict, gBandError;
-Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth, gGhostLength,
-  gBendLength, gBandMargin, gMaxFlare, gMaxBendMerge, gMaxMerge,
-  gMinHintElementLength, gFlexCand;
-Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
-float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
-int32_t gLenTopBands, gLenBotBands, gNumSerifs, gDMin, gDelta, gCPpercent;
-int32_t gBendTan, gSCurveTan;
-HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
-HintSeg* gSegLists[4];
-Fixed gVStems[MAXSTEMS], gHStems[MAXSTEMS];
-int32_t gNumVStems, gNumHStems;
-Fixed gTopBands[MAXBLUES], gBotBands[MAXBLUES], gSerifs[MAXSERIFS];
-HintPoint *gPointList, **gPtLstArray;
-int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
-bool gWriteHintedBez = true;
-Fixed gBlueFuzz;
-bool gDoAligns = false, gDoStems = false;
-bool gRoundToInt;
-static int maxStemDist = MAXSTEMDIST;
+//PathElt *gPathStart, *gPathEnd;
+//bool gUseV, gUseH, gAutoLinearCurveFix, gEditGlyph;
+//bool gHasFlex, gFlexOK, gFlexStrict, gBandError;
+//Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth, gGhostLength,
+//  gBendLength, gBandMargin, gMaxFlare, gMaxBendMerge, gMaxMerge,
+//  gMinHintElementLength, gFlexCand;
+//Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
+//float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
+//int32_t gLenTopBands, gLenBotBands, gNumSerifs, gDMin, gDelta, gCPpercent;
+//int32_t gBendTan, gSCurveTan;
+//HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
+//HintSeg* gSegLists[4];
+//Fixed gVStems[MAXSTEMS], gHStems[MAXSTEMS];
+//int32_t gNumVStems, gNumHStems;
+//Fixed gTopBands[MAXBLUES], gBotBands[MAXBLUES], gSerifs[MAXSERIFS];
+//HintPoint *gPointList, **gPtLstArray;
+//int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
+//bool gWriteHintedBez = true;
+//Fixed gBlueFuzz;
+//bool gDoAligns = false, gDoStems = false;
+//bool gRoundToInt;
+//static int maxStemDist = MAXSTEMDIST;
 
 /* if false, then stems defined by curves are excluded from the reporting */
-unsigned int gAllStems = false;
-AC_REPORTSTEMPTR gAddHStemCB = NULL;
-AC_REPORTSTEMPTR gAddVStemCB = NULL;
-AC_REPORTZONEPTR gAddGlyphExtremesCB = NULL;
-AC_REPORTZONEPTR gAddStemExtremesCB = NULL;
-AC_RETRYPTR gReportRetryCB = NULL;
-void* gAddStemUserData = NULL;
-void* gAddExtremesUserData = NULL;
-void* gReportRetryUserData = NULL;
+//unsigned int gAllStems = false;
+//AC_REPORTSTEMPTR gAddHStemCB = NULL;
+//AC_REPORTSTEMPTR gAddVStemCB = NULL;
+//AC_REPORTZONEPTR gAddGlyphExtremesCB = NULL;
+//AC_REPORTZONEPTR gAddStemExtremesCB = NULL;
+//AC_RETRYPTR gReportRetryCB = NULL;
+//void* gAddStemUserData = NULL;
+//void* gAddExtremesUserData = NULL;
+//void* gReportRetryUserData = NULL;
 
 #define VMSIZE (1000000)
 static unsigned char *vmfree, *vmlast, vm[VMSIZE];
@@ -145,5 +145,5 @@ AutoHint(const ACFontInfo* fontinfo, const char* srcbezdata, bool extrahint,
     gRoundToInt = roundCoords;
     gAutoLinearCurveFix = gEditGlyph;
 
-    return AutoHintGlyph(srcbezdata, extrahint);
+    return AutoHintGlyph(srcbezdata, extrahint, eM);
 }

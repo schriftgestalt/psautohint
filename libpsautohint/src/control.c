@@ -372,7 +372,7 @@ XtraHints(PathElt* e)
 }
 
 static void
-Blues(void)
+Blues(PathElt* e)
 {
     Fixed pv = 0, pd = 0, pc = 0, pb = 0, pa = 0;
     HintVal* sLst;
@@ -534,7 +534,7 @@ Blues(void)
     if (NoBlueGlyph()) {
         gLenTopBands = gLenBotBands = 0;
     }
-    GenHPts();
+    GenHPts(e);
     LogMsg(LOGDEBUG, OK, "evaluate");
     if (!CounterFailed && HHintGlyph()) {
         pv = gPruneValue;
@@ -638,12 +638,12 @@ DoHStems(HintVal* sLst1)
 }
 
 static void
-Yellows(void)
+Yellows(PathElt* e)
 {
     Fixed pv = 0, pd = 0, pc = 0, pb = 0, pa = 0;
     HintVal* sLst;
     LogMsg(LOGDEBUG, OK, "generate yellows");
-    GenVPts(SpecialGlyphType());
+    GenVPts(SpecialGlyphType(), e);
     LogMsg(LOGDEBUG, OK, "evaluate");
     if (!CounterFailed && VHintGlyph()) {
         pv = gPruneValue;
@@ -780,16 +780,16 @@ AddHintsSetup(void)
 /* If extrahint is true then it is ok to have multi-level
  hinting. */
 static void
-AddHintsInnerLoop(const char* srcglyph, bool extrahint)
+AddHintsInnerLoop(const char* srcglyph, bool extrahint, PathElt* eM)
 {
     int32_t retryHinting = 0;
     while (true) {
         PreGenPts();
         CheckSmooth();
-        InitShuffleSubpaths();
-        Blues();
+        InitShuffleSubpaths(eM);
+        Blues(eM);
         if (!gDoAligns) {
-            Yellows();
+            Yellows(eM);
         }
         if (gEditGlyph) {
             DoShuffleSubpaths();
@@ -858,7 +858,7 @@ AddHintsCleanup(void)
 }
 
 static void
-AddHints(const char* srcglyph, bool extrahint)
+AddHints(const char* srcglyph, bool extrahint, PathElt* e)
 {
     if (gPathStart == NULL || gPathStart == gPathEnd) {
         LogMsg(INFO, OK, "No glyph path, so no hints.");
@@ -876,18 +876,18 @@ AddHints(const char* srcglyph, bool extrahint)
         gHasFlex = false;
         AutoAddFlex();
     }
-    AddHintsInnerLoop(srcglyph, extrahint);
+    AddHintsInnerLoop(srcglyph, extrahint, e);
     AddHintsCleanup();
 }
 
 bool
-AutoHintGlyph(const char* srcglyph, bool extrahint)
+AutoHintGlyph(const char* srcglyph, bool extrahint, PathElt* e)
 {
     int32_t lentop = gLenTopBands, lenbot = gLenBotBands;
     if (!ReadGlyph(srcglyph, false, false)) {
         LogMsg(LOGERROR, NONFATALERROR, "Cannot parse glyph.");
     }
-    AddHints(srcglyph, extrahint);
+    AddHints(srcglyph, extrahint, e);
     gLenTopBands = lentop;
     gLenBotBands = lenbot;
     return true;

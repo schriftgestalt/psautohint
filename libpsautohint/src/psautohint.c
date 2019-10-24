@@ -134,7 +134,7 @@ AutoHintString(const char* srcbezdata, const char* fontinfodata,
 
 ACLIB_API int
 AutoHintStringMM(const char** srcbezdata, int nmasters, const char** masters,
-                 ACBuffer** outbuffers)
+                 ACBuffer** outbuffers, PathElt* e)
 {
     /* Only the master with index 'hintsMasterIx' needs to be hinted.
      * This function expects that the master with index 'hintsMasterIx' has
@@ -180,7 +180,7 @@ AutoHintStringMM(const char** srcbezdata, int nmasters, const char** masters,
     }
 
     /* result == true is good */
-    result = MergeGlyphPaths(srcbezdata, nmasters, masters, outbuffers);
+    result = MergeGlyphPaths(srcbezdata, nmasters, masters, outbuffers, e);
 
     /* The following call to error_handler() always returns control to just
      * after the setjmp() function call above, but with value set to 1 if

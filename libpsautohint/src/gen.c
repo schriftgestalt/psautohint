@@ -620,7 +620,7 @@ NxtSameDir(Fixed x0, Fixed y0, Fixed x1, Fixed y1, PathElt* p)
 }
 
 void
-GenVPts(int32_t specialGlyphType)
+GenVPts(int32_t specialGlyphType, PathElt* e)
 {
     /* specialGlyphType 1 = upper; -1 = lower; 0 = neither */
     PathElt *p, *fl;
@@ -696,8 +696,8 @@ GenVPts(int32_t specialGlyphType)
                     q2 = VertQuo(x0, y0, x1, y1);
                     yd2 = (q2 > 0) ? AdjDist(y1 - y0, q2) : 0;
                     if (isVert && q2 > 0 && abs(yd2) > abs(ydist)) {
-                        if (x0 == px1 && px1 == px2 && px2 == x1)
-                            ReportLinearCurve(p, x0, y0, x1, y1);
+//                        if (x0 == px1 && px1 == px2 && px2 == x1)
+//                            ReportLinearCurve(p, x0, y0, x1, y1);
                         ydist = FixHalfMul(yd2);
                         yavg = FixHalfMul(y0 + y1);
                         PrvForBend(p, &prvx, &prvy);
@@ -726,7 +726,7 @@ GenVPts(int32_t specialGlyphType)
                 if (px1 - maxx >= FixTwo || px2 - maxx >= FixTwo ||
                     px1 - minx <= FixTwo || px2 - minx <= FixTwo) {
                     FindCurveBBox(x0, y0, px1, py1, px2, py2, x1, y1, &llx,
-                                  &lly, &urx, &ury);
+                                  &lly, &urx, &ury, e);
                     if (urx - maxx > FixTwo || minx - llx > FixTwo) {
                         Fixed loc, frst, lst;
                         loc = (minx - llx > urx - maxx) ? llx : urx;
@@ -850,7 +850,7 @@ PickHSpot(Fixed x0, Fixed y0, Fixed x1, Fixed y1, Fixed xdist, Fixed px1,
 }
 
 void
-GenHPts(void)
+GenHPts(PathElt* e)
 {
     PathElt *p, *fl;
     bool isHoriz, flex1, flex2;
@@ -925,8 +925,8 @@ GenHPts(void)
                     xd2 = (q2 > 0) ? AdjDist(x1 - x0, q2) : 0;
                     if (isHoriz && q2 > 0 && abs(xd2) > abs(xdist)) {
                         Fixed hspot;
-                        if (y0 == py1 && py1 == py2 && py2 == y1)
-                            ReportLinearCurve(p, x0, y0, x1, y1);
+//                        if (y0 == py1 && py1 == py2 && py2 == y1)
+//                            ReportLinearCurve(p, x0, y0, x1, y1);
                         PrvForBend(p, &prvx, &prvy);
                         NxtForBend(p, &nxtx, &nxty, &xx, &yy);
                         xdist = FixHalfMul(xd2);
@@ -955,7 +955,7 @@ GenHPts(void)
                 if (py1 - maxy >= FixTwo || py2 - maxy >= FixTwo ||
                     py1 - miny <= FixTwo || py2 - miny <= FixTwo) {
                     FindCurveBBox(x0, y0, px1, py1, px2, py2, x1, y1, &llx,
-                                  &lly, &urx, &ury);
+                                  &lly, &urx, &ury, e);
                     if (ury - maxy > FixTwo || miny - lly > FixTwo) {
                         Fixed loc, frst, lst;
                         loc = (miny - lly > ury - maxy) ? lly : ury;

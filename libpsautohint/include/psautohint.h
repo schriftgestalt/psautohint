@@ -168,8 +168,8 @@ ACLIB_API int AutoHintString(const char* srcbezdata, const char* fontinfo,
  * Function: AutoHintStringMM
  *
  */
-ACLIB_API int AutoHintStringMM(const char** srcbezdata, int nmasters,
-                               const char** masters, ACBuffer** outbuffers);
+//ACLIB_API int AutoHintStringMM(const char** srcbezdata, int nmasters,
+//                               const char** masters, ACBuffer** outbuffers, PathElt* e);
 
 /*
  * Function: AC_initCallGlobals

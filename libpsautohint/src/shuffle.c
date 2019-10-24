@@ -14,10 +14,10 @@ static unsigned char* links;
 static int32_t rowcnt;
 
 void
-InitShuffleSubpaths(void)
+InitShuffleSubpaths(PathElt* eM)
 {
     int32_t cnt = -1;
-    PathElt* e = gPathStart;
+    PathElt* e = eM; // gPathStart;
     while (e != NULL) { /* every element is marked with its subpath count */
         if (e->type == MOVETO)
             cnt++;

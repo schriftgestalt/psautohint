@@ -20,29 +20,29 @@ FixToDbl(Fixed f)
 }
 
 void
-ReportAddFlex(void)
+ReportAddFlex(bool *gHasFlex)
 {
-    if (gHasFlex)
+    if (*gHasFlex)
         return;
-    gHasFlex = true;
+    *gHasFlex = true;
     LogMsg(INFO, OK, "added flex operators to this glyph.");
 }
 
-void
-ReportLinearCurve(PathElt* e, Fixed x0, Fixed y0, Fixed x1, Fixed y1)
-{
-    if (gAutoLinearCurveFix) {
-        e->type = LINETO;
-        e->x = e->x3;
-        e->y = e->y3;
-        LogMsg(INFO, OK, "Curve from %g %g to %g %g was changed to a line.",
-               FixToDbl(x0), FixToDbl(-y0), FixToDbl(x1), FixToDbl(-y1));
-    } else {
-        LogMsg(INFO, OK,
-               "Curve from %g %g to %g %g should be changed to a line.",
-               FixToDbl(x0), FixToDbl(-y0), FixToDbl(x1), FixToDbl(-y1));
-    }
-}
+//void
+//ReportLinearCurve(PathElt* e, Fixed x0, Fixed y0, Fixed x1, Fixed y1)
+//{
+//    if (gAutoLinearCurveFix) {
+//        e->type = LINETO;
+//        e->x = e->x3;
+//        e->y = e->y3;
+//        LogMsg(INFO, OK, "Curve from %g %g to %g %g was changed to a line.",
+//               FixToDbl(x0), FixToDbl(-y0), FixToDbl(x1), FixToDbl(-y1));
+//    } else {
+//        LogMsg(INFO, OK,
+//               "Curve from %g %g to %g %g should be changed to a line.",
+//               FixToDbl(x0), FixToDbl(-y0), FixToDbl(x1), FixToDbl(-y1));
+//    }
+//}
 
 static void
 ReportNonHVError(Fixed x0, Fixed y0, Fixed x1, Fixed y1, char* s)

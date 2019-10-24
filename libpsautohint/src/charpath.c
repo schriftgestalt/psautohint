@@ -406,7 +406,7 @@ WriteSbandWidth(void)
 }
 
 static bool
-CurveBBox(indx mIx, int16_t hinttype, int32_t pathIx, Fixed* value)
+CurveBBox(indx mIx, int16_t hinttype, int32_t pathIx, Fixed* value, PathElt* e)
 {
     Cd startPt, endPt;
     Fixed llx, lly, urx, ury, minval = 0, maxval = 0;
@@ -444,7 +444,7 @@ CurveBBox(indx mIx, int16_t hinttype, int32_t pathIx, Fixed* value)
         /* Transform coordinates so I get the same value that AC would give. */
         FindCurveBBox(startPt.x, -startPt.y, pathElt.x1, -pathElt.y1,
                       pathElt.x2, -pathElt.y2, endPt.x, -endPt.y, &llx, &lly,
-                      &urx, &ury);
+                      &urx, &ury, e);
         if (*maxbx > maxval || minval > *minbx) {
             if (minval - *minbx > *maxbx - maxval)
                 *value = (hinttype == RB || hinttype == RV + ESCVAL) ? -*minbx
@@ -470,7 +470,7 @@ nearlyequal_(Fixed a, Fixed b, Fixed tolerance)
  glyph files start from one and the path array starts
  from zero we need to subtract one from the path index. */
 static int16_t
-GetPointType(int16_t hinttype, Fixed value, int32_t* pathEltIx)
+GetPointType(int16_t hinttype, Fixed value, int32_t* pathEltIx, PathElt* e)
 {
     Cd startPt, endPt;
     Fixed startval = 0, endval = 0, loc;
@@ -523,7 +523,7 @@ retry:
     if (!tryAgain)
         *pathEltIx -= 1;
 
-    if (CurveBBox(hintsMasterIx, hinttype, *pathEltIx - 1, &loc) &&
+    if (CurveBBox(hintsMasterIx, hinttype, *pathEltIx - 1, &loc, e) &&
         nearlyequal_(value, loc, FixOne))
         return CURVEBBOX;
 
@@ -572,7 +572,7 @@ GetRelativePosition(Fixed currEnd, Fixed currStart, Fixed end, Fixed start,
  be stored.  pathIx is the index of the path segment used to
  calculate this particular hint. */
 static void
-InsertHint(HintElt* currHintElt, indx pathEltIx, int16_t type1, int16_t type2)
+InsertHint(HintElt* currHintElt, indx pathEltIx, int16_t type1, int16_t type2, PathElt* e)
 {
     indx ix, j;
     Cd startPt, endPt;
@@ -618,7 +618,7 @@ InsertHint(HintElt* currHintElt, indx pathEltIx, int16_t type1, int16_t type2)
                                 : FixHalfMul(startPt.x + endPt.x));
                     break;
                 case CURVEBBOX:
-                    if (!CurveBBox(ix, hinttype, pathIx, value)) {
+                    if (!CurveBBox(ix, hinttype, pathIx, value, e)) {
                         GetRelPos(pathIx, hinttype,
                                   ((j == 0) ? currHintElt->leftorbot
                                             : currHintElt->rightortop),
@@ -643,7 +643,7 @@ InsertHint(HintElt* currHintElt, indx pathEltIx, int16_t type1, int16_t type2)
                     if (!GetInflectionPoint(startPt.x, startPt.y, pathElt.x1,
                                             pathElt.y1, pathElt.x2, pathElt.y2,
                                             pathElt.x3, pathElt.y3,
-                                            value)) { /* no flat spot found */
+                                            value, e)) { /* no flat spot found */
                         /* Get relative position of value in currHintElt. */
                         GetRelPos(pathIx, hinttype,
                                   ((j == 0) ? currHintElt->leftorbot
@@ -673,7 +673,7 @@ InsertHint(HintElt* currHintElt, indx pathEltIx, int16_t type1, int16_t type2)
 }
 
 static void
-ReadHints(HintElt* hintElt, indx pathEltIx)
+ReadHints(HintElt* hintElt, indx pathEltIx, PathElt* e)
 {
     HintElt* currElt = hintElt;
     int16_t pointtype1, pointtype2;
@@ -689,7 +689,7 @@ ReadHints(HintElt* hintElt, indx pathEltIx)
                                       &(currElt->pathix2));
         else
             pointtype2 = GHOST;
-        InsertHint(currElt, pathEltIx, pointtype1, pointtype2);
+        InsertHint(currElt, pathEltIx, pointtype1, pointtype2, e);
         currElt = currElt->next;
     }
 }
@@ -697,19 +697,19 @@ ReadHints(HintElt* hintElt, indx pathEltIx)
 /* Reads hints from hints master path list and assigns corresponding
  hints to other designs. */
 static bool
-ReadandAssignHints(void)
+ReadandAssignHints(PathElt* e)
 {
     indx ix;
 
     /* Check for main hints first, i.e. global to glyph. */
     if (pathlist[hintsMasterIx].mainhints != NULL)
-        ReadHints(pathlist[hintsMasterIx].mainhints, MAINHINTS);
+        ReadHints(pathlist[hintsMasterIx].mainhints, MAINHINTS, e);
     /* Now check for local hint values. */
     for (ix = 0; ix < gPathEntries; ix++) {
         if (pathlist[hintsMasterIx].path == NULL)
             return false;
         if (pathlist[hintsMasterIx].path[ix].hints != NULL)
-            ReadHints(pathlist[hintsMasterIx].path[ix].hints, ix);
+            ReadHints(pathlist[hintsMasterIx].path[ix].hints, ix, e);
     }
     return true;
 }
@@ -1702,7 +1702,7 @@ GetLengthandSubrIx(int16_t opcount, int16_t* length, int16_t* subrIx)
 
 bool
 MergeGlyphPaths(const char** srcglyphs, int nmasters, const char** masters,
-                ACBuffer** outbuffers)
+                ACBuffer** outbuffers, PathElt* e)
 {
     bool ok;
     /* This requires that  master  hintsMasterIx has already been hinted with
@@ -1714,7 +1714,7 @@ MergeGlyphPaths(const char** srcglyphs, int nmasters, const char** masters,
     if (ok) {
         SetSbandWidth();
         if (gAddHints && hintsMasterIx >= 0 && gPathEntries > 0) {
-            if (!ReadandAssignHints()) {
+            if (!ReadandAssignHints(e)) {
                 LogMsg(LOGERROR, FATALERROR,
                        "Path problem in ReadAndAssignHints");
             }
