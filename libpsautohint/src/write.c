@@ -83,18 +83,19 @@ static void
 wrty(Fixed y)
 {
     Fixed i;
-    if ((gRoundToInt) || (FracPart(y) == 0)) {
-        Fixed dy;
+    Fixed dy = y - currenty;
+    if (gRoundToInt || (FracPart(dy) == 0)) {
         i = FRnd(y);
         dy = i - currenty;
         WRTNUM(FTrunc(dy));
         currenty = i;
     } else {
         float r;
-        i = y - currenty;
         currenty = y;
-        r = (float)FIXED2FLOAT(i);
-        WRTRNUM(r);
+        r = (float)FIXED2FLOAT(dy);
+        r *= 100.0;
+        WRTNUM(r);
+        WriteString("100 div ");
     }
 }
 
