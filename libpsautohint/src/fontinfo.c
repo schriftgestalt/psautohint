@@ -23,6 +23,7 @@ static void
 ParseStems(const ACFontInfo* fontinfo, char* kw, Fixed* stems, int32_t* pnum)
 {
     int istems[MAXSTEMS], i;
+    memset(istems, 0, MAXSTEMS * sizeof(int));
     ParseIntStems(fontinfo, kw, OPTIONAL, MAXSTEMS, istems, pnum);
     for (i = 0; i < *pnum; i++)
         stems[i] = FixInt(istems[i]);
@@ -305,12 +306,14 @@ FreeFontInfo(ACFontInfo* fontinfo)
     if (!fontinfo)
         return;
 
-    for (i = 0; i < fontinfo->length; i++) {
-        if (fontinfo->values[i][0]) {
-            UnallocateMem(fontinfo->values[i]);
+    if(fontinfo->values) {
+        for (i = 0; i < fontinfo->length; i++) {
+            if (fontinfo->values[i][0]) {
+                UnallocateMem(fontinfo->values[i]);
+            }
         }
+        UnallocateMem(fontinfo->values);
     }
-    UnallocateMem(fontinfo->values);
     UnallocateMem(fontinfo);
 }
 

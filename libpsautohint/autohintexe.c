@@ -7,21 +7,12 @@
  * This license is available at: http://opensource.org/licenses/Apache-2.0.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#if !defined(_MSC_VER) || _MSC_VER >= 1800
-#include <stdbool.h>
-#else
-typedef unsigned char bool;
-#define true 1
-#define false 0
-#define snprintf(buf, len, format, ...)                                        \
-    _snprintf_s(buf, len, len, format, __VA_ARGS__)
-#endif
 
 #include "psautohint.h"
 
@@ -445,9 +436,8 @@ main(int argc, char* argv[])
             }
 
             ACBufferFree(output);
+            output=NULL;
             if (result != AC_Success) {
-                if (verbose)
-                    printf("2 result != AC_Success %d", result);
                 exit(result);
             }
         }
@@ -503,6 +493,7 @@ main(int argc, char* argv[])
             free(masters[i]);
             free(inGlyphs[i]);
             ACBufferFree(outGlyphs[i]);
+            outGlyphs[i] = NULL;
         }
         free(inGlyphs);
         free(outGlyphs);
@@ -518,6 +509,8 @@ main(int argc, char* argv[])
         free(fontinfo);
 
     ACBufferFree(reportBuffer);
+    reportBuffer = NULL;
+    AC_initCallGlobals(); /* clear out references to reportBuffer */
 
     return 0;
 }

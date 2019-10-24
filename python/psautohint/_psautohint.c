@@ -18,19 +18,10 @@
 #define PY_SSIZE_T_CLEAN 1
 #include <Python.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if !defined(_MSC_VER) || _MSC_VER >= 1800
-#include <stdbool.h>
-#else
-typedef unsigned char bool;
-#define true 1
-#define false 0
-#define snprintf(buf, len, format, ...)                                        \
-    _snprintf_s(buf, len, len, format, __VA_ARGS__)
-#endif
 
 #include "psautohint.h"
 
@@ -100,16 +91,6 @@ reportRetry(void* userData)
     ACBufferReset((ACBuffer*)userData);
 }
 
-#if PY_MAJOR_VERSION >= 3
-#define MEMNEW(size) PyMem_RawCalloc(1, size)
-#define MEMFREE(ptr) PyMem_RawFree(ptr)
-#define MEMRENEW(ptr, size) PyMem_RawRealloc(ptr, size)
-#else
-#define MEMNEW(size) PyMem_Malloc(size)
-#define MEMFREE(ptr) PyMem_Free(ptr)
-#define MEMRENEW(ptr, size) PyMem_Realloc(ptr, size)
-#endif
-
 static void*
 memoryManager(void* ctx, void* ptr, size_t size)
 {
@@ -117,11 +98,11 @@ memoryManager(void* ctx, void* ptr, size_t size)
         return NULL;
 
     if (ptr && size)
-        ptr = MEMRENEW(ptr, size);
+        ptr = PyMem_RawRealloc(ptr, size);
     else if (size)
-        ptr = MEMNEW(size);
+        ptr = PyMem_RawCalloc(1, size);
     else
-        MEMFREE(ptr);
+        PyMem_RawFree(ptr);
 
     return ptr;
 }
@@ -158,7 +139,7 @@ autohint(PyObject* self, PyObject* args)
     char* inData = NULL;
     char* fontInfo = NULL;
     bool error = true;
-    ACBuffer* reportBufffer = NULL;
+    ACBuffer* reportBuffer = NULL;
 
     if (!PyArg_ParseTuple(args, "O!O!|iiiii", &PyBytes_Type, &fontObj,
                           &PyBytes_Type, &inObj, &allowEdit, &allowHintSub,
@@ -166,18 +147,18 @@ autohint(PyObject* self, PyObject* args)
         return NULL;
 
     if (report) {
-        reportBufffer = ACBufferNew(150);
+        reportBuffer = ACBufferNew(150);
         allowEdit = allowHintSub = false;
         switch (report) {
             case 1:
-                AC_SetReportRetryCB(reportRetry, (void*)reportBufffer);
+                AC_SetReportRetryCB(reportRetry, (void*)reportBuffer);
                 AC_SetReportZonesCB(charZoneCB, stemZoneCB,
-                                    (void*)reportBufffer);
+                                    (void*)reportBuffer);
                 break;
             case 2:
-                AC_SetReportRetryCB(reportRetry, (void*)reportBufffer);
+                AC_SetReportRetryCB(reportRetry, (void*)reportBuffer);
                 AC_SetReportStemsCB(hstemCB, vstemCB, allStems,
-                                    (void*)reportBufffer);
+                                    (void*)reportBuffer);
                 break;
             default:
                 PyErr_SetString(PyExc_ValueError,
@@ -203,14 +184,15 @@ autohint(PyObject* self, PyObject* args)
                 char* data;
                 size_t len;
                 error = false;
-                if (reportBufffer)
-                    ACBufferRead(reportBufffer, &data, &len);
+                if (reportBuffer)
+                    ACBufferRead(reportBuffer, &data, &len);
                 else
                     ACBufferRead(output, &data, &len);
                 outObj = PyBytes_FromStringAndSize(data, len);
             }
         }
         ACBufferFree(output);
+        output=NULL;
 
         if (result != AC_Success) {
             switch (result) {
@@ -232,7 +214,9 @@ autohint(PyObject* self, PyObject* args)
     }
 
 done:
-    ACBufferFree(reportBufffer);
+    ACBufferFree(reportBuffer);
+    reportBuffer = NULL;
+    AC_initCallGlobals(); /* clear out references to reportBuffer */
 
     if (error)
         return NULL;
@@ -285,7 +269,7 @@ autohintmm(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    masters = MEMNEW(mastersCount * sizeof(char*));
+    masters = PyMem_RawCalloc(mastersCount, sizeof(char*));
     if (!masters) {
         PyErr_NoMemory();
         return NULL;
@@ -305,8 +289,8 @@ autohintmm(PyObject* self, PyObject* args)
     if (outSeq) {
         int result = -1;
 
-        const char** inGlyphs = MEMNEW(inCount * sizeof(char*));
-        ACBuffer** outGlyphs = MEMNEW(inCount * sizeof(ACBuffer*));
+        const char** inGlyphs = PyMem_RawCalloc(inCount, sizeof(char*));
+        ACBuffer** outGlyphs = PyMem_RawCalloc(inCount, sizeof(ACBuffer*));
         if (!inGlyphs || !outGlyphs) {
             PyErr_NoMemory();
             goto finish;
@@ -336,12 +320,14 @@ autohintmm(PyObject* self, PyObject* args)
 
     finish:
         if (outGlyphs) {
-            for (i = 0; i < inCount; i++)
+            for (i = 0; i < inCount; i++) {
                 ACBufferFree(outGlyphs[i]);
+                outGlyphs[i] = NULL;
+            }
         }
 
-        MEMFREE(inGlyphs);
-        MEMFREE(outGlyphs);
+        PyMem_RawFree(inGlyphs);
+        PyMem_RawFree(outGlyphs);
 
         if (result != AC_Success) {
             switch (result) {
@@ -363,7 +349,7 @@ autohintmm(PyObject* self, PyObject* args)
     }
 
 done:
-    MEMFREE(masters);
+    PyMem_RawFree(masters);
 
     if (error) {
         Py_XDECREF(outSeq);
@@ -392,7 +378,6 @@ static char psautohint_doc[] =
     Py_INCREF(PsAutoHintError);                                                \
     PyModule_AddObject(m, "error", PsAutoHintError);
 
-#if PY_MAJOR_VERSION >= 3
 /* clang-format off */
 static struct PyModuleDef psautohint_module = {
   PyModuleDef_HEAD_INIT,
@@ -420,18 +405,3 @@ PyInit__psautohint(void)
 
     return m;
 }
-#else /* Python < 3 */
-PyMODINIT_FUNC
-init_psautohint(void)
-{
-    PyObject* m;
-
-    m = Py_InitModule3("_psautohint", psautohint_methods, psautohint_doc);
-    if (m == NULL)
-        return;
-
-    SETUPMODULE
-
-    return;
-}
-#endif

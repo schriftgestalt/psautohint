@@ -139,6 +139,8 @@ Outpath(unsigned char* links, unsigned char* outlinks, unsigned char* output,
             break;
         e = e->next;
     }
+    if (e == NULL)
+        return;
     MoveSubpathToEnd(e);
     LogMsg(LOGDEBUG, OK, "move subpath %d to end.", bst);
     output[bst] = 1;
@@ -160,6 +162,9 @@ DoShuffleSubpaths(void)
     unsigned char sumlinks[MAXCNT], output[MAXCNT], outlinks[MAXCNT];
     unsigned char* lnks;
     int32_t i, j;
+    memset(sumlinks, 0, MAXCNT * sizeof(unsigned char));
+    memset(output, 0, MAXCNT * sizeof(unsigned char));
+    memset(outlinks, 0, MAXCNT * sizeof(unsigned char));
     if (links == NULL)
         return;
     PrintLinks();

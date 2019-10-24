@@ -28,8 +28,6 @@
 #     Add glyph hint entry to plist file
 #  Save font plist file.
 
-from __future__ import print_function, absolute_import
-
 import ast
 import logging
 import os
@@ -156,14 +154,19 @@ class GlyphReports:
             bot_dict[bot] += 1
         return top_dict, bot_dict
 
-    @staticmethod
-    def assemble_rep_list(items_dict, count_dict):
+    def assemble_rep_list(self, items_dict, count_dict):
         # item 0: stem/zone count
         # item 1: stem width/zone height
         # item 2: list of glyph names
+        gorder = list(self.glyphs.keys())
         rep_list = []
         for item in items_dict:
-            rep_list.append((count_dict[item], item, sorted(items_dict[item])))
+            gnames = list(items_dict[item])
+            # sort the names by the font's glyph order
+            if len(gnames) > 1:
+                gindexes = [gorder.index(gname) for gname in gnames]
+                gnames = [x for _, x in sorted(zip(gindexes, gnames))]
+            rep_list.append((count_dict[item], item, gnames))
         return rep_list
 
     def _get_lists(self):
@@ -279,24 +282,23 @@ class GlyphReports:
                   "Top Zone List for %s on %s\n" % (path, atime),
                   "Bottom Zone List for %s on %s\n" % (path, atime),
                   )
-        headers = ("Count\tWidth\tGlyph List\n",
-                   "Count\tWidth\tGlyph List\n",
-                   "Count\tTop Zone\tGlyph List\n",
-                   "Count\tBottom Zone\tGlyph List\n",
-                   )
+        headers = (["count    width    glyphs\n"] * 2 +
+                   ["count   height    glyphs\n"] * 2)
+
         for i, item in enumerate(items):
             reps, sortFunc = item
             if not reps:
                 continue
-            fName = '{}{}'.format(path, suffixes[i])
+            fName = f'{path}{suffixes[i]}'
             title = titles[i]
             header = headers[i]
             with open(fName, "w") as fp:
                 fp.write(title)
                 fp.write(header)
                 reps.sort(key=sortFunc)
-                for item in reps:
-                    fp.write("%s\t%s\t%s\n" % (item[0], item[1], item[2]))
+                for rep in reps:
+                    gnames = ' '.join(rep[2])
+                    fp.write(f"{rep[0]:5}    {rep[1]:5}    [{gnames}]\n")
                 log.info("Wrote %s" % fName)
 
 
@@ -391,10 +393,10 @@ fontInfoKeywordList = [
     'Baseline6',
 ]
 
-integerPattern = """ -?\d+"""
-arrayPattern = """ \[[ ,0-9]+\]"""
-stringPattern = """ \S+"""
-counterPattern = """ \([\S ]+\)"""
+integerPattern = r""" -?\d+"""
+arrayPattern = r""" \[[ ,0-9]+\]"""
+stringPattern = r""" \S+"""
+counterPattern = r""" \([\S ]+\)"""
 
 
 def printFontInfo(fontInfoString):
@@ -417,7 +419,7 @@ def printFontInfo(fontInfoString):
 def openFile(path, options):
     font_format = get_font_format(path)
     if font_format is None:
-        raise FontParseError("{} is not a supported font format".format(path))
+        raise FontParseError(f"{path} is not a supported font format")
 
     if font_format == "UFO":
         font = UFOFontData(path, options.logOnly, options.writeToDefaultLayer)

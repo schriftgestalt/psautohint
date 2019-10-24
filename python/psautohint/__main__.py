@@ -4,16 +4,13 @@
 Auto-hinting program for PostScript, OpenType/CFF and UFO fonts.
 """
 
-from __future__ import print_function, absolute_import
-
 import argparse
 import logging
 import os
 import re
 import subprocess
+import sys
 import textwrap
-
-from fontTools.misc.py23 import open
 
 from . import __version__, get_font_format
 from .autohint import ACOptions, hintFiles
@@ -39,7 +36,7 @@ The reports provided by the stemHist tool can be useful for choosing alignment
 zone and stem width values.
 """
 
-FDDICT_DOC = """
+FDDICT_DOC = r"""
 By default, psautohint uses the font's global alignment zones and stem widths
 when hinting each glyph. However, if there is a file named 'fontinfo' in the
 same directory as the input font file, psautohint will search it for
@@ -353,7 +350,7 @@ class _CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
         arg_rows = arg.splitlines()
         for i, line in enumerate(arg_rows):
             search = re.search(r'\s*[0-9\-]{0,}\.?\s*', line)
-            if line.strip() is "":
+            if line.strip() == "":
                 arg_rows[i] = " "
             elif search:
                 line_wtsp = search.end()
@@ -369,6 +366,7 @@ class _AdditionalHelpAction(argparse.Action):
     """
     Based on argparse's _HelpAction and _VersionAction.
     """
+
     def __init__(self,
                  option_strings,
                  addl_help=None,
@@ -387,6 +385,36 @@ class _AdditionalHelpAction(argparse.Action):
         formatter = parser._get_formatter()
         formatter.add_text(self.addl_help)
         parser.exit(message=formatter.format_help())
+
+
+class _DeprecatedAction(argparse.Action):
+    """
+    Custom action to raise a DeprecationWarning when hit. Used for the
+    autohint compatibility args/flags.
+    """
+
+    def __init__(self,
+                 option_strings,
+                 dest,
+                 ap_action=None,
+                 **kwArgs):
+        self._ap_action = ap_action
+        super(_DeprecatedAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            **kwArgs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        autohint_compat_warning = (
+            f"WARNING: option '{option_string}' is supported only for "
+            "compatibility with the old 'autohint' tool and may be removed in "
+            "future versions")
+        print(autohint_compat_warning, file=sys.stderr)
+
+        if self._ap_action == 'store_true':
+            setattr(namespace, self.dest, True)
+        else:
+            setattr(namespace, self.dest, values)
 
 
 class DuplicateMessageFilter(logging.Filter):
@@ -427,7 +455,7 @@ def _check_save_path(path_str):
             os.remove(check_path)
     except (IOError, OSError):
         raise argparse.ArgumentTypeError(
-            "{} is not a valid path to write to.".format(test_path))
+            f"{test_path} is not a valid path to write to.")
     return test_path
 
 
@@ -448,16 +476,15 @@ def _validate_font_paths(path_lst, parser):
     format_set = set()
     for path in path_lst:
         font_format = get_font_format(path)
+        base_name = os.path.basename(path)
         if font_format is None:
-            parser.error("{} is not a supported font format".format(
-                os.path.basename(path)))
+            parser.error(f"{base_name} is not a supported font format")
         if font_format in ("PFA", "PFB", "PFC"):
             if has_tx is None:
                 has_tx = _check_tx()
             if not has_tx:
-                parser.error("{} font format requires 'tx'. "
-                             "Please install 'afdko'.".format(
-                                 os.path.basename(path)))
+                parser.error(f"{base_name} font format requires 'tx'. "
+                             "Please install 'afdko'.")
         format_set.add(font_format)
     if len(format_set) > 1:
         parser.error("the input fonts must be all of the same format")
@@ -470,7 +497,7 @@ def _validate_path(path_str):
     valid_path = os.path.abspath(os.path.realpath(path_str))
     if not os.path.exists(valid_path):
         raise argparse.ArgumentTypeError(
-            "{} is not a valid path.".format(path_str))
+            f"{path_str} is not a valid path.")
     return valid_path
 
 
@@ -501,10 +528,10 @@ def get_options(args):
         formatter_class=_CustomHelpFormatter,
         description=__doc__
     )
-    parser.add_argument(
+    parser_fonts = parser.add_argument(
         'font_paths',
         metavar='FONT',
-        nargs='+',
+        nargs='*',
         type=_validate_path,
         help='Type1/CFF/OTF/UFO font files'
     )
@@ -642,7 +669,7 @@ def get_options(args):
         metavar='PATH',
         type=_validate_path,
         help='file containing hinting parameters\n'
-             "Default: '{}'".format(FONTINFO_FILE_NAME)
+             f"Default: '{FONTINFO_FILE_NAME}'"
     )
     parser.add_argument(
         '--print-dflt-fddict',
@@ -682,6 +709,131 @@ def get_options(args):
         action='store_true',
         help="show traceback for exceptions.",
     )
+
+    # The following are added for compatibility with autohint. The action,
+    # _DeprecatedAction, will cause a warning message to be displayed when
+    # the option is used. Using help=argparse.SUPPRESS causes them not to be
+    # displayed in the standard help ('psautohint -h/--help').
+    parser.add_argument(
+        # -a/--all
+        '-all',
+        nargs=0,
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        dest='hint_all_ufo',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # -w/--write-to-default-layer
+        '-wd',
+        nargs=0,
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        dest='write_to_default_layer',
+        help=argparse.SUPPRESS,
+    )
+    glyphs_parser.add_argument(
+        # --glyphs-file
+        '-gf',
+        dest='glyphs_to_hint_file',
+        action=_DeprecatedAction,
+        type=_validate_path,
+        help=argparse.SUPPRESS,
+    )
+    glyphs_parser.add_argument(
+        # -x/--exclude-glyphs
+        '-xg',
+        dest='glyphs_to_not_hint',
+        action=_DeprecatedAction,
+        type=_split_comma_sequence,
+        default=[],
+        help=argparse.SUPPRESS,
+    )
+    glyphs_parser.add_argument(
+        # --exclude-glyphs-file
+        '-xgf',
+        dest='glyphs_to_not_hint_file',
+        action=_DeprecatedAction,
+        type=_validate_path,
+        help=argparse.SUPPRESS,
+    )
+    report_parser.add_argument(
+        # --report-only
+        '-logOnly',
+        nargs=0,
+        dest='report_only',
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # --log
+        '-log',
+        dest='log_path',
+        action=_DeprecatedAction,
+        type=_check_save_path,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # -d/--decimal
+        '-decimal',
+        nargs=0,
+        dest='decimal',
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # --no-flex
+        '-nf',
+        nargs=0,
+        dest='no_flex',
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # --no-hint-sub
+        '-ns',
+        nargs=0,
+        dest='no_hint_sub',
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # --no-zones-stems
+        '-nb',
+        action='store_true',
+        dest='no_zones_stems',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # --print-dflt-fddict
+        '-pfd',
+        nargs=0,
+        dest='print_dflt_fddict',
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # --print-list-fddict
+        '-pfdl',
+        nargs=0,
+        dest='print_list_fddict',
+        action=_DeprecatedAction,
+        ap_action='store_true',
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        # --doc-fddict
+        '-hfd',
+        action=_AdditionalHelpAction,
+        help=argparse.SUPPRESS,
+        addl_help=FDDICT_DOC
+    )
+
     parsed_args = parser.parse_args(args)
 
     if parsed_args.verbose == 0:
@@ -695,6 +847,18 @@ def get_options(args):
                         filename=parsed_args.log_path)
     for handler in logging.root.handlers:
         handler.addFilter(DuplicateMessageFilter())
+
+    if (not len(parsed_args.font_paths or []) and
+            len(parsed_args.output_paths or [])):
+        # allow "psautohint -o outputpath inputpath"
+        # see https://github.com/adobe-type-tools/psautohint/issues/129
+        half = len(parsed_args.output_paths) // 2
+        parsed_args.font_paths = [
+            parsed_args.output_paths.pop(half) for _ in range(half)]
+
+    if not len(parsed_args.font_paths):
+        parser.error(
+            f"the following arguments are required: {parser_fonts.metavar}")
 
     if (parsed_args.output_paths and
             len(parsed_args.font_paths) != len(parsed_args.output_paths)):
@@ -933,5 +1097,4 @@ def stemhist(args=None):
 
 
 if __name__ == '__main__':
-    import sys
     sys.exit(main())
