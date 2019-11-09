@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5693CE88237634E20065A77F /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5693CE87237634E20065A77F /* Tests.m */; };
+		5693CE8A237634E20065A77F /* libpsautohint.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BD2C115E203DF50800D922B6 /* libpsautohint.a */; };
 		56BD964E226E09C700452646 /* buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 56BD964D226E09C700452646 /* buffer.c */; };
 		BD2C1182203DF53500D922B6 /* ac.c in Sources */ = {isa = PBXBuildFile; fileRef = BD2C1165203DF53500D922B6 /* ac.c */; };
 		BD2C1183203DF53500D922B6 /* acfixed.c in Sources */ = {isa = PBXBuildFile; fileRef = BD2C1166203DF53500D922B6 /* acfixed.c */; };
@@ -47,7 +49,20 @@
 		BD2C11B3203DF56F00D922B6 /* optable.h in Headers */ = {isa = PBXBuildFile; fileRef = BD2C11A9203DF56F00D922B6 /* optable.h */; settings = {ATTRIBUTES = (Private, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		5693CE8B237634E20065A77F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BD2C1156203DF50800D922B6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD2C115D203DF50800D922B6;
+			remoteInfo = libpsautohint;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		5693CE85237634E20065A77F /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5693CE87237634E20065A77F /* Tests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Tests.m; sourceTree = "<group>"; };
+		5693CE89237634E20065A77F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		56BD964D226E09C700452646 /* buffer.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = buffer.c; sourceTree = "<group>"; };
 		BD2C115E203DF50800D922B6 /* libpsautohint.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libpsautohint.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BD2C1165203DF53500D922B6 /* ac.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ac.c; sourceTree = "<group>"; };
@@ -90,6 +105,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		5693CE82237634E20065A77F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5693CE8A237634E20065A77F /* libpsautohint.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BD2C115B203DF50800D922B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -100,11 +123,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5693CE86237634E20065A77F /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				5693CE87237634E20065A77F /* Tests.m */,
+				5693CE89237634E20065A77F /* Info.plist */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		BD2C1155203DF50800D922B6 = {
 			isa = PBXGroup;
 			children = (
 				BD2C11B5203DF57F00D922B6 /* include */,
 				BD2C11B6203DF58B00D922B6 /* src */,
+				5693CE86237634E20065A77F /* Tests */,
 				BD2C115F203DF50800D922B6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -114,6 +147,7 @@
 			isa = PBXGroup;
 			children = (
 				BD2C115E203DF50800D922B6 /* libpsautohint.a */,
+				5693CE85237634E20065A77F /* Tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -195,6 +229,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		5693CE84237634E20065A77F /* Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5693CE8F237634E20065A77F /* Build configuration list for PBXNativeTarget "Tests" */;
+			buildPhases = (
+				5693CE81237634E20065A77F /* Sources */,
+				5693CE82237634E20065A77F /* Frameworks */,
+				5693CE83237634E20065A77F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5693CE8C237634E20065A77F /* PBXTargetDependency */,
+			);
+			name = Tests;
+			productName = Tests;
+			productReference = 5693CE85237634E20065A77F /* Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		BD2C115D203DF50800D922B6 /* libpsautohint */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BD2C1162203DF50800D922B6 /* Build configuration list for PBXNativeTarget "libpsautohint" */;
@@ -222,6 +274,11 @@
 				LastUpgradeCheck = 0820;
 				ORGANIZATIONNAME = rroberts;
 				TargetAttributes = {
+					5693CE84237634E20065A77F = {
+						CreatedOnToolsVersion = 10.1;
+						DevelopmentTeam = X2L8375ZQ7;
+						ProvisioningStyle = Automatic;
+					};
 					BD2C115D203DF50800D922B6 = {
 						CreatedOnToolsVersion = 8.2.1;
 						ProvisioningStyle = Automatic;
@@ -241,9 +298,20 @@
 			projectRoot = "";
 			targets = (
 				BD2C115D203DF50800D922B6 /* libpsautohint */,
+				5693CE84237634E20065A77F /* Tests */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5693CE83237634E20065A77F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		56BD964C226E098800452646 /* Set version number */ = {
@@ -267,6 +335,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		5693CE81237634E20065A77F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5693CE88237634E20065A77F /* Tests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BD2C115A203DF50800D922B6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -304,7 +380,76 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		5693CE8C237634E20065A77F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD2C115D203DF50800D922B6 /* libpsautohint */;
+			targetProxy = 5693CE8B237634E20065A77F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		5693CE8D237634E20065A77F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = X2L8375ZQ7;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../include/psautohint.h";
+				INFOPLIST_FILE = Tests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.schriftgestalt.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		5693CE8E237634E20065A77F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = X2L8375ZQ7;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../include/psautohint.h";
+				INFOPLIST_FILE = Tests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.schriftgestalt.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		BD2C1160203DF50800D922B6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -411,6 +556,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5693CE8F237634E20065A77F /* Build configuration list for PBXNativeTarget "Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5693CE8D237634E20065A77F /* Debug */,
+				5693CE8E237634E20065A77F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BD2C1159203DF50800D922B6 /* Build configuration list for PBXProject "libpsautohint" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

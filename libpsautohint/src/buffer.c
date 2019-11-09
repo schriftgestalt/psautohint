@@ -13,12 +13,7 @@
 #include "memory.h"
 #include "psautohint.h"
 
-struct ACBuffer
-{
-    char* data;      /* buffer data, NOT null-terminated */
-    size_t len;      /* actual length of the data */
-    size_t capacity; /* allocated memory size */
-};
+
 
 ACLIB_API ACBuffer*
 ACBufferNew(size_t size)

@@ -54,6 +54,12 @@ enum
     AC_LogError
 };
 
+struct ACBuffer
+{
+    char* data;      /* buffer data, NOT null-terminated */
+    size_t len;      /* actual length of the data */
+    size_t capacity; /* allocated memory size */
+};
 
 typedef struct ACBuffer ACBuffer;
 
