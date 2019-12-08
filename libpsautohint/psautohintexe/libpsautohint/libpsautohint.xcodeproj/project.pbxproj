@@ -287,7 +287,7 @@
 			};
 			buildConfigurationList = BD2C1159203DF50800D922B6 /* Build configuration list for PBXProject "libpsautohint" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,

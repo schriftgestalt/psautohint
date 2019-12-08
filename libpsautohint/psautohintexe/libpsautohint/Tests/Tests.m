@@ -34,7 +34,10 @@
     int result = AutoHintString(bezdata, fontinfo, output, allowEdit, allowHintSub, roundCoords);
     
     if (result == AC_Success) {
-        resultString = [NSString stringWithCString:output->data encoding:NSASCIIStringEncoding];
+        char *data = nil;
+        size_t length = 0;
+        ACBufferRead(output, &data, &length);
+        resultString = [NSString stringWithCString:data encoding:NSASCIIStringEncoding];
     }
     
     ACBufferFree(output);
