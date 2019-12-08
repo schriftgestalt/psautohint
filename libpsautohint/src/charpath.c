@@ -12,6 +12,7 @@
 #include "charpath.h"
 #include "opcodes.h"
 #include "optable.h"
+#include "logging.h"
 
 #define DONT_COMBINE_PATHS 1
 
@@ -32,7 +33,8 @@
 
 static bool firstMT;
 static Cd* refPtArray = NULL;
-static ACBuffer* outbuff;
+// Note: thread-safe: Passing outbuff as arg.
+//static ACBuffer* outbuff;
 static int masterCount;
 static const char** masterNames;
 static PathList* pathlist = NULL;
@@ -49,15 +51,19 @@ static void GetLengthandSubrIx(int16_t, int16_t*, int16_t*);
 #define WRTNUMA(i) WriteToBuffer("%0.2f ", round((double)(i)*100) / 100)
 #define WriteSubr(val) WriteToBuffer("%d subr ", val)
 
+// HACK: to add outbuff to Write{X,Y}
+#define WriteX(x) WriteXToBuffer(outbuff, x)
+#define WriteY(y) WriteYToBuffer(outbuff, y)
+
 static void
-WriteX(Fixed x)
+WriteXToBuffer(ACBuffer* outbuff, Fixed x)
 {
     Fixed i = FRnd(x);
     WRTNUM(FTrunc(i));
 }
 
 static void
-WriteY(Fixed y)
+WriteYToBuffer(ACBuffer* outbuff, Fixed y)
 {
     Fixed i = FRnd(y);
     WRTNUM(FTrunc(i));
@@ -70,7 +76,7 @@ WriteY(Fixed y)
     }
 
 static void
-WriteOneHintVal(Fixed val)
+WriteOneHintVal(ACBuffer* outbuff, Fixed val)
 {
     if (FracPart(val) == 0)
         WRTNUM(FTrunc(val));
@@ -354,7 +360,7 @@ SetSbandWidth(void)
 }
 
 static void
-WriteSbandWidth(void)
+WriteSbandWidth(ACBuffer* outbuff)
 {
     int16_t subrix, length, opcount = GetOperandCount(SBX);
     indx ix, j, startix = 0;
@@ -681,12 +687,12 @@ ReadHints(HintElt* hintElt, indx pathEltIx, PathElt* e)
     while (currElt != NULL) {
         if (currElt->pathix1 != 0)
             pointtype1 = GetPointType(currElt->type, currElt->leftorbot,
-                                      &(currElt->pathix1));
+                                      &(currElt->pathix1), e);
         else
             pointtype1 = GHOST;
         if (currElt->pathix2 != 0)
             pointtype2 = GetPointType(currElt->type, currElt->rightortop,
-                                      &(currElt->pathix2));
+                                      &(currElt->pathix2), e);
         else
             pointtype2 = GHOST;
         InsertHint(currElt, pathEltIx, pointtype1, pointtype2, e);
@@ -783,7 +789,7 @@ OptimizeCT(indx ix)
 }
 
 static void
-MtorDt(Cd coord, indx startix, int16_t length)
+MtorDt(ACBuffer* outbuff, Cd coord, indx startix, int16_t length)
 {
     if (length == 2) {
         WriteCd(coord);
@@ -794,7 +800,7 @@ MtorDt(Cd coord, indx startix, int16_t length)
 }
 
 static void
-Hvct(Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
+Hvct(ACBuffer* outbuff, Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
 {
     indx ix;
     indx lastix = startix + length;
@@ -823,7 +829,7 @@ Hvct(Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
 }
 
 static void
-Vhct(Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
+Vhct(ACBuffer* outbuff, Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
 {
     indx ix;
     indx lastix = startix + length;
@@ -853,7 +859,7 @@ Vhct(Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
 
 /* length can only be 1, 2, 3 or 6 */
 static void
-Ct(Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
+Ct(ACBuffer* outbuff, Cd coord1, Cd coord2, Cd coord3, indx startix, int16_t length)
 {
     indx ix;
     indx lastix = startix + length;
@@ -1009,7 +1015,7 @@ GetFlexCoord(indx rmtCt, indx mIx, indx eltix, Cd* coord)
  data is written  (i.e. sb and width, flex, hints, dt, ct, mt) AND
  an OtherSubr 7 - 11 will be called. */
 static void
-WriteFlex(indx eltix)
+WriteFlex(ACBuffer* outbuff, indx eltix)
 {
     bool vert = (pathlist[hintsMasterIx].path[eltix].x ==
                  pathlist[hintsMasterIx].path[eltix + 1].x3);
@@ -1092,7 +1098,7 @@ WriteFlex(indx eltix)
                             WriteY(coord.y);
                             break;
                         case RMT:
-                            MtorDt(coord, opix, length);
+                            MtorDt(outbuff, coord, opix, length);
                             break;
                     }
                 }
@@ -1113,7 +1119,7 @@ WriteFlex(indx eltix)
 }
 
 static void
-WriteUnmergedHints(indx pathEltIx, indx mIx)
+WriteUnmergedHints(ACBuffer* outbuff, indx pathEltIx, indx mIx)
 {
     HintElt* hintList;
 
@@ -1137,8 +1143,8 @@ WriteUnmergedHints(indx pathEltIx, indx mIx)
              * sidebearing. */
             hintList->leftorbot -= FixInt(pathlist[mIx].sb);
 
-        WriteOneHintVal(hintList->leftorbot);
-        WriteOneHintVal(hintList->rightortop);
+        WriteOneHintVal(outbuff, hintList->leftorbot);
+        WriteOneHintVal(outbuff, hintList->rightortop);
         switch (hinttype) {
             case RB:
                 WriteToBuffer("rb\n");
@@ -1172,7 +1178,7 @@ WriteUnmergedHints(indx pathEltIx, indx mIx)
 #define BREAK_ON_NULL_HINTARRAY_IX if(hintArray[ix] == NULL) break
 
 static void
-WriteHints(indx pathEltIx)
+WriteHints(ACBuffer* outbuff, indx pathEltIx)
 {
     indx ix, opix;
     int16_t opcount, subrIx, length;
@@ -1215,13 +1221,13 @@ WriteHints(indx pathEltIx)
                 rtsame = false;
         }
         if (lbsame && rtsame) {
-            WriteOneHintVal(hintArray[0]->leftorbot);
-            WriteOneHintVal(hintArray[0]->rightortop);
+            WriteOneHintVal(outbuff, hintArray[0]->leftorbot);
+            WriteOneHintVal(outbuff, hintArray[0]->rightortop);
         } else if (lbsame) {
-            WriteOneHintVal(hintArray[0]->leftorbot);
+            WriteOneHintVal(outbuff, hintArray[0]->leftorbot);
             for (ix = 0; ix < masterCount; ix++) {
                 BREAK_ON_NULL_HINTARRAY_IX;
-                WriteOneHintVal((ix == 0 ? hintArray[ix]->rightortop
+                WriteOneHintVal(outbuff, (ix == 0 ? hintArray[ix]->rightortop
                                          : hintArray[ix]->rightortop -
                                              hintArray[0]->rightortop));
             }
@@ -1230,30 +1236,30 @@ WriteHints(indx pathEltIx)
         } else if (rtsame) {
             for (ix = 0; ix < masterCount; ix++) {
                 BREAK_ON_NULL_HINTARRAY_IX;
-                WriteOneHintVal((ix == 0 ? hintArray[ix]->leftorbot
+                WriteOneHintVal(outbuff, (ix == 0 ? hintArray[ix]->leftorbot
                                          : hintArray[ix]->leftorbot -
                                              hintArray[0]->leftorbot));
             }
             GetLengthandSubrIx(1, &length, &subrIx);
             WriteSubr(subrIx);
-            WriteOneHintVal(hintArray[0]->rightortop);
+            WriteOneHintVal(outbuff, hintArray[0]->rightortop);
         } else {
             opcount = GetOperandCount(hinttype);
             GetLengthandSubrIx(opcount, &length, &subrIx);
             if ((writeSubrOnce = (length == opcount))) {
-                WriteOneHintVal(hintArray[0]->leftorbot);
-                WriteOneHintVal(hintArray[0]->rightortop);
+                WriteOneHintVal(outbuff, hintArray[0]->leftorbot);
+                WriteOneHintVal(outbuff, hintArray[0]->rightortop);
                 length = startix = 1;
             }
             for (opix = 0; opix < opcount; opix += length) {
                 for (ix = startix; ix < masterCount; ix++) {
                     BREAK_ON_NULL_HINTARRAY_IX;
                     if (opix == 0)
-                        WriteOneHintVal((ix == 0 ? hintArray[ix]->leftorbot
+                        WriteOneHintVal(outbuff, (ix == 0 ? hintArray[ix]->leftorbot
                                                  : hintArray[ix]->leftorbot -
                                                      hintArray[0]->leftorbot));
                     else
-                        WriteOneHintVal((ix == 0 ? hintArray[ix]->rightortop
+                        WriteOneHintVal(outbuff, (ix == 0 ? hintArray[ix]->rightortop
                                                  : hintArray[ix]->rightortop -
                                                      hintArray[0]->rightortop));
                 }
@@ -1288,7 +1294,7 @@ WriteHints(indx pathEltIx)
 }
 
 static void
-WritePathElt(indx mIx, indx eltIx, int16_t pathType, indx startix,
+WritePathElt(ACBuffer* outbuff, indx mIx, indx eltIx, int16_t pathType, indx startix,
              int16_t length)
 {
     Cd c1, c2, c3;
@@ -1317,7 +1323,7 @@ WritePathElt(indx mIx, indx eltIx, int16_t pathType, indx startix,
                 c1.x = (mIx == 0 ? path->rx : path->rx - path0->rx);
                 c1.y = (mIx == 0 ? path->ry : path->ry - path0->ry);
             }
-            MtorDt(c1, startix, length);
+            MtorDt(outbuff, c1, startix, length);
             break;
         case HVCT:
         case VHCT:
@@ -1346,11 +1352,11 @@ WritePathElt(indx mIx, indx eltIx, int16_t pathType, indx startix,
                 c3.y = path->ry3 - path0->ry3;
             }
             if (pathType == RCT || pathType == CT)
-                Ct(c1, c2, c3, startix, length);
+                Ct(outbuff, c1, c2, c3, startix, length);
             else if (pathType == HVCT)
-                Hvct(c1, c2, c3, startix, length);
+                Hvct(outbuff, c1, c2, c3, startix, length);
             else
-                Vhct(c1, c2, c3, startix, length);
+                Vhct(outbuff, c1, c2, c3, startix, length);
             break;
         case CP:
             break;
@@ -1456,6 +1462,7 @@ WritePaths(ACBuffer** outBuffers)
     indx ix, eltix, opix, startIx, mIx;
     int16_t length, subrIx, opcount, op;
     bool xequal, yequal;
+    ACBuffer* outbuff = NULL;
 
 #if DONT_COMBINE_PATHS
     for (mIx = 0; mIx < masterCount; mIx++) {
@@ -1466,7 +1473,7 @@ WritePaths(ACBuffer** outBuffers)
         WriteToBuffer("%% %s\n", gGlyphName);
 
         if (gAddHints && (pathlist[hintsMasterIx].mainhints != NULL))
-            WriteUnmergedHints(MAINHINTS, mIx);
+            WriteUnmergedHints(outbuff, MAINHINTS, mIx);
 
         WriteToBuffer("sc\n");
         for (eltix = 0; eltix < gPathEntries; eltix++) {
@@ -1483,12 +1490,12 @@ WritePaths(ACBuffer** outBuffers)
                 op = DT;
 
             if (gAddHints && elt.hints != NULL)
-                WriteUnmergedHints(eltix, mIx);
+                WriteUnmergedHints(outbuff, eltix, mIx);
 
             opcount = GetOperandCount(op);
             GetLengthandSubrIx(opcount, &length, &subrIx);
 
-            WritePathElt(mIx, eltix, op, 0, opcount);
+            WritePathElt(outbuff, mIx, eltix, op, 0, opcount);
 
             WriteToBuffer("%s\n", GetOperator(op));
         }
@@ -1502,15 +1509,15 @@ WritePaths(ACBuffer** outBuffers)
 
     WriteToBuffer("%% %s\n", gGlyphName);
 
-    WriteSbandWidth();
+    WriteSbandWidth(outbuff);
     if (gAddHints && (pathlist[hintsMasterIx].mainhints != NULL))
-        WriteHints(MAINHINTS);
+        WriteHints(outbuff, MAINHINTS);
     WriteToBuffer("sc\n");
     firstMT = true;
     for (eltix = 0; eltix < gPathEntries; eltix++) {
         xequal = yequal = false;
         if (gAddHints && (pathlist[hintsMasterIx].path[eltix].hints != NULL))
-            WriteHints(eltix);
+            WriteHints(outbuff, eltix);
         switch (pathlist[0].path[eltix].type) {
             case RMT:
                 /* translate by sidebearing value */
@@ -1524,7 +1531,7 @@ WritePaths(ACBuffer** outBuffers)
                 break;
             case RCT:
                 if (CheckFlexOK(eltix)) {
-                    WriteFlex(eltix);
+                    WriteFlex(outbuff, eltix);
                     /* Since we know the next element is a flexed curve and
                      has been written out we skip it. */
                     eltix++;
@@ -1548,7 +1555,7 @@ WritePaths(ACBuffer** outBuffers)
         opcount = GetOperandCount(op);
         GetLengthandSubrIx(opcount, &length, &subrIx);
         if (xequal && yequal) {
-            WritePathElt(0, eltix, op, 0, opcount);
+            WritePathElt(outbuff, 0, eltix, op, 0, opcount);
         } else if (xequal) {
             WriteX(pathlist[0].path[eltix].rx);
             if (op != HMT && op != HDT) {
@@ -1571,14 +1578,14 @@ WritePaths(ACBuffer** outBuffers)
             WriteY(pathlist[0].path[eltix].ry);
         } else
             for (opix = 0; opix < opcount; opix += length) {
-                WritePathElt(0, eltix, op, opix, length);
+                WritePathElt(outbuff, 0, eltix, op, opix, length);
                 startIx = opix;
                 if (op == RCT || op == HVCT || op == VHCT)
                     if (SamePathValues(eltix, op, startIx, length))
                         continue;
                 for (ix = 0; ix < length; ix++) {
                     for (mIx = 1; mIx < masterCount; mIx++)
-                        WritePathElt(mIx, eltix, op, startIx, 1);
+                        WritePathElt(outbuff, mIx, eltix, op, startIx, 1);
                     startIx++;
                 }
                 if (subrIx >= 0 && op != CP)
