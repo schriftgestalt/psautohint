@@ -8,6 +8,7 @@
  */
 
 #include "ac.h"
+#include "logging.h"
 
 PathElt*
 GetDest(PathElt* cldest)

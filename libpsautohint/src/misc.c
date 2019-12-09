@@ -8,6 +8,7 @@
  */
 
 #include "ac.h"
+#include "logging.h"
 
 int32_t
 CountSubPaths(void)
@@ -217,7 +218,7 @@ TryYFlex(PathElt* e, PathElt* n, Fixed x0, Fixed y0, Fixed x1, Fixed y1)
         return;
     }
     if (AddAutoFlexProp(e, true))
-        ReportAddFlex();
+        ReportAddFlex(&gHasFlex);
 }
 
 static void
@@ -276,7 +277,7 @@ TryXFlex(PathElt* e, PathElt* n, Fixed x0, Fixed y0, Fixed x1, Fixed y1)
         return;
     }
     if (AddAutoFlexProp(e, false))
-        ReportAddFlex();
+        ReportAddFlex(&gHasFlex);
 }
 
 void

@@ -9,8 +9,9 @@
 
 #include "ac.h"
 #include "bbox.h"
+#include "logging.h"
 
-static bool mergeMain;
+_Thread_local static bool mergeMain;
 
 static PathElt*
 GetSubPathNxt(PathElt* e)

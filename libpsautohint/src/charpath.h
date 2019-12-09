@@ -35,8 +35,8 @@ typedef struct {
   int16_t width;
 } PathList;
 
-extern int32_t gPathEntries;  /* number of elements in a glyph path */
-extern bool gAddHints;  /* whether to include hints in the font */
+_Thread_local extern int32_t gPathEntries;  /* number of elements in a glyph path */
+_Thread_local extern bool gAddHints;  /* whether to include hints in the font */
 
 GlyphPathElt* AppendGlyphPathElement(int);
 

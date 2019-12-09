@@ -10,17 +10,18 @@
 #include <math.h>
 
 #include "ac.h"
+#include "logging.h"
 
-static bool xflat, yflat, xdone, ydone, bbquit;
-static int32_t xstate, ystate, xstart, ystart;
-static Fixed x0, cy0, x1, cy1, xloc, yloc;
-static Fixed x, y, xnxt, ynxt;
-static Fixed yflatstartx, yflatstarty, yflatendx, yflatendy;
-static Fixed xflatstarty, xflatstartx, xflatendx, xflatendy;
-static bool vert, started, reCheckSmooth;
-static Fixed loc, frst, lst, fltnvalue;
-static PathElt* eX;
-static bool forMultiMaster = false, inflPtFound = false;
+_Thread_local static bool xflat, yflat, xdone, ydone, bbquit;
+_Thread_local static int32_t xstate, ystate, xstart, ystart;
+_Thread_local static Fixed x0, cy0, x1, cy1, xloc, yloc;
+_Thread_local static Fixed x, y, xnxt, ynxt;
+_Thread_local static Fixed yflatstartx, yflatstarty, yflatendx, yflatendy;
+_Thread_local static Fixed xflatstarty, xflatstartx, xflatendx, xflatendy;
+_Thread_local static bool vert, started, reCheckSmooth;
+_Thread_local static Fixed loc, frst, lst, fltnvalue;
+_Thread_local static PathElt* e/*X*/;
+_Thread_local static bool forMultiMaster = false, inflPtFound = false;
 
 #define STARTING (0)
 #define goingUP (1)
@@ -32,12 +33,13 @@ static bool forMultiMaster = false, inflPtFound = false;
 #define SDELTA (FixInt(8))
 #define SDELTA3 (FixInt(10))
 
-//static void
-//chkBad(void)
-//{
-//    reCheckSmooth = ResolveConflictBySplit(e, false, NULL, NULL);
-//    ;
-//}
+//FIXME:thread-safe: check why Georg removed in WIP: very early 24 Oct 2019 commit
+static void
+chkBad(void)
+{
+    reCheckSmooth = ResolveConflictBySplit(e, false, NULL, NULL);
+    ;
+}
 
 #define GrTan(n, d) (abs(n) * 100 > abs(d) * gSCurveTan)
 #define LsTan(n, d) (abs(n) * 100 < abs(d) * gSCurveTan)
@@ -159,7 +161,7 @@ chkXDIR(void)
 }
 
 static void
-chkDT(Cd c, PathElt* eM)
+chkDT(Cd c)
 {
     Fixed loc;
 
@@ -175,7 +177,7 @@ chkDT(Cd c, PathElt* eM)
             if ((ystart == goingUP && yflatstarty - yflatendy > SDELTA) ||
                 (ystart == goingDOWN && yflatendy - yflatstarty > SDELTA)) {
                 if (gEditGlyph && !forMultiMaster)
-                    //chkBad();
+                    chkBad();
                 return;
             }
             if (abs(yflatstartx - yflatendx) > SDELTA3) {
@@ -188,7 +190,7 @@ chkDT(Cd c, PathElt* eM)
                 DEBUG_ROUND(loc);
 
                 if (!forMultiMaster) {
-                    AddHSegment(yflatstartx, yflatendx, loc, eM, NULL, sCURVE, 13);
+                    AddHSegment(yflatstartx, yflatendx, loc, e/*M*/, NULL, sCURVE, 13);
                 } else {
                     inflPtFound = true;
                     fltnvalue = -loc;
@@ -204,7 +206,7 @@ chkDT(Cd c, PathElt* eM)
             if ((xstart == goingUP && xflatstartx - xflatendx > SDELTA) ||
                 (xstart == goingDOWN && xflatendx - xflatstartx > SDELTA)) {
                 if (gEditGlyph && !forMultiMaster)
-                    //chkBad();
+                    chkBad();
                 return;
             }
             if (abs(xflatstarty - xflatendy) > SDELTA3) {
@@ -219,7 +221,7 @@ chkDT(Cd c, PathElt* eM)
                 if (!forMultiMaster)
 
                 {
-                    AddVSegment(xflatstarty, xflatendy, loc, eM, NULL, sCURVE,
+                    AddVSegment(xflatstarty, xflatendy, loc, e/*M*/, NULL, sCURVE,
                                 13);
                 } else {
                     inflPtFound = true;
@@ -323,7 +325,7 @@ GetInflectionPoint(Fixed px, Fixed py, Fixed px1, Fixed pcy1, Fixed px2,
     xloc = x0;
     yloc = cy0;
     forMultiMaster = true;
-    FltnCurve(c0, c1, c2, c3, &fltnrec, e);
+    FltnCurve(c0, c1, c2, c3, &fltnrec);
     if (inflPtFound)
         *inflPt = fltnvalue;
     return inflPtFound;
@@ -356,7 +358,7 @@ CheckSCurve(PathElt* ee)
     yloc = cy0;
     //e = ee;
     forMultiMaster = false;
-    FltnCurve(c0, c1, c2, c3, &fr, ee);
+    FltnCurve(c0, c1, c2, c3, &fr);
 }
 
 static void
@@ -448,7 +450,7 @@ restart:
                     coordinate system. */
 
 static void
-chkBBDT(Cd c, PathElt* e)
+chkBBDT(Cd c)
 {
     Fixed x = c.x, y = c.y;
     if (bbquit)
@@ -508,8 +510,8 @@ CheckBBoxEdge(PathElt* e, bool vrt, Fixed lc, Fixed* pf, Fixed* pl)
     loc = lc;
     vert = vrt;
     started = false;
-    chkBBDT(c0, e);
-    FltnCurve(c0, c1, c2, c3, &fr, e);
+    chkBBDT(c0);
+    FltnCurve(c0, c1, c2, c3, &fr);
     *pf = frst;
     *pl = lst;
 }

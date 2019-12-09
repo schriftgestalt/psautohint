@@ -9,8 +9,9 @@
 
 #include "ac.h"
 #include "bbox.h"
+#include "logging.h"
 
-static HintVal *Vrejects, *Hrejects;
+_Thread_local static HintVal *Vrejects, *Hrejects;
 
 void
 InitPick(int32_t reason)

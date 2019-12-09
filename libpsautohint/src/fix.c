@@ -8,8 +8,9 @@
  */
 
 #include "ac.h"
+#include "logging.h"
 
-static Fixed bPrev, tPrev;
+_Thread_local static Fixed bPrev, tPrev;
 
 void
 InitFix(int32_t reason)

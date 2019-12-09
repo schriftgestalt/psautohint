@@ -12,16 +12,17 @@
 #include "ac.h"
 #include "charpath.h"
 #include "opcodes.h"
+#include "logging.h"
 
-char gGlyphName[MAX_GLYPHNAME_LEN];
+_Thread_local char gGlyphName[MAX_GLYPHNAME_LEN];
 
-static Fixed currentx, currenty; /* used to calculate absolute coordinates */
-static Fixed tempx, tempy;       /* used to calculate relative coordinates */
+_Thread_local static Fixed currentx, currenty; /* used to calculate absolute coordinates */
+_Thread_local static Fixed tempx, tempy;       /* used to calculate relative coordinates */
 #define STKMAX (20)
-static Fixed stk[STKMAX];
-static int32_t stkindex;
-static bool flex, startchar;
-static bool forMultiMaster, includeHints;
+_Thread_local static Fixed stk[STKMAX];
+_Thread_local static int32_t stkindex;
+_Thread_local static bool flex, startchar;
+_Thread_local static bool forMultiMaster, includeHints;
 /* Reading file for comparison of multiple master data and hint information.
    Reads into GlyphPathElt structure instead of PathElt. */
 

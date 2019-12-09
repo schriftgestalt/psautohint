@@ -11,9 +11,10 @@
 
 #include "ac.h"
 #include "bbox.h"
+#include "logging.h"
 
-static SegLnkLst *Hlnks, *Vlnks;
-static int32_t cpFrom, cpTo;
+_Thread_local static SegLnkLst *Hlnks, *Vlnks;
+_Thread_local static int32_t cpFrom, cpTo;
 
 void
 InitGen(int32_t reason)

@@ -8,10 +8,11 @@
  */
 
 #include "ac.h"
+#include "logging.h"
 #define MAXCNT (100)
 
-static unsigned char* links;
-static int32_t rowcnt;
+_Thread_local static unsigned char* links;
+_Thread_local static int32_t rowcnt;
 
 void
 InitShuffleSubpaths(PathElt* eM)

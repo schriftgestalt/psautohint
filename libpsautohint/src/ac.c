@@ -9,45 +9,47 @@
 
 #include "ac.h"
 #include "fontinfo.h"
+#include "logging.h"
 
 #define MAXSTEMDIST 150 /* initial maximum stem width allowed for hints */
 
-//PathElt *gPathStart, *gPathEnd;
-//bool gUseV, gUseH, gAutoLinearCurveFix, gEditGlyph;
-//bool gHasFlex, gFlexOK, gFlexStrict, gBandError;
-//Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth, gGhostLength,
-//  gBendLength, gBandMargin, gMaxFlare, gMaxBendMerge, gMaxMerge,
-//  gMinHintElementLength, gFlexCand;
-//Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
-//float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
-//int32_t gLenTopBands, gLenBotBands, gNumSerifs, gDMin, gDelta, gCPpercent;
-//int32_t gBendTan, gSCurveTan;
-//HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
-//HintSeg* gSegLists[4];
-//Fixed gVStems[MAXSTEMS], gHStems[MAXSTEMS];
-//int32_t gNumVStems, gNumHStems;
-//Fixed gTopBands[MAXBLUES], gBotBands[MAXBLUES], gSerifs[MAXSERIFS];
-//HintPoint *gPointList, **gPtLstArray;
-//int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
-//bool gWriteHintedBez = true;
-//Fixed gBlueFuzz;
-//bool gDoAligns = false, gDoStems = false;
-//bool gRoundToInt;
-//static int maxStemDist = MAXSTEMDIST;
+_Thread_local PathElt *gPathStart, *gPathEnd;
+_Thread_local bool gUseV, gUseH, gAutoLinearCurveFix, gEditGlyph;
+_Thread_local bool gHasFlex, gFlexOK, gFlexStrict, gBandError;
+_Thread_local Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth, gGhostLength,
+  gBendLength, gBandMargin, gMaxFlare, gMaxBendMerge, gMaxMerge,
+  gMinHintElementLength, gFlexCand;
+_Thread_local Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
+_Thread_local float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
+_Thread_local int32_t gLenTopBands, gLenBotBands, gNumSerifs, gDMin, gDelta, gCPpercent;
+_Thread_local int32_t gBendTan, gSCurveTan;
+_Thread_local HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
+_Thread_local HintSeg* gSegLists[4];
+_Thread_local Fixed gVStems[MAXSTEMS], gHStems[MAXSTEMS];
+_Thread_local int32_t gNumVStems, gNumHStems;
+_Thread_local Fixed gTopBands[MAXBLUES], gBotBands[MAXBLUES], gSerifs[MAXSERIFS];
+_Thread_local HintPoint *gPointList, **gPtLstArray;
+_Thread_local int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
+_Thread_local bool gWriteHintedBez = true;
+_Thread_local Fixed gBlueFuzz;
+_Thread_local bool gDoAligns = false, gDoStems = false;
+_Thread_local bool gRoundToInt;
+/* thread-safe: may be safe, as maxStemDist doesn't seem to change. */
+static int maxStemDist = MAXSTEMDIST;
 
 /* if false, then stems defined by curves are excluded from the reporting */
-//unsigned int gAllStems = false;
-//AC_REPORTSTEMPTR gAddHStemCB = NULL;
-//AC_REPORTSTEMPTR gAddVStemCB = NULL;
-//AC_REPORTZONEPTR gAddGlyphExtremesCB = NULL;
-//AC_REPORTZONEPTR gAddStemExtremesCB = NULL;
-//AC_RETRYPTR gReportRetryCB = NULL;
-//void* gAddStemUserData = NULL;
-//void* gAddExtremesUserData = NULL;
-//void* gReportRetryUserData = NULL;
+_Thread_local unsigned int gAllStems = false;
+_Thread_local AC_REPORTSTEMPTR gAddHStemCB = NULL;
+_Thread_local AC_REPORTSTEMPTR gAddVStemCB = NULL;
+_Thread_local AC_REPORTZONEPTR gAddGlyphExtremesCB = NULL;
+_Thread_local AC_REPORTZONEPTR gAddStemExtremesCB = NULL;
+_Thread_local AC_RETRYPTR gReportRetryCB = NULL;
+_Thread_local void* gAddStemUserData = NULL;
+_Thread_local void* gAddExtremesUserData = NULL;
+_Thread_local void* gReportRetryUserData = NULL;
 
 #define VMSIZE (1000000)
-static unsigned char *vmfree, *vmlast, vm[VMSIZE];
+_Thread_local static unsigned char *vmfree, *vmlast, vm[VMSIZE];
 
 /* sub allocator */
 void*
@@ -136,6 +138,7 @@ bool
 AutoHint(const ACFontInfo* fontinfo, const char* srcbezdata, bool extrahint,
          bool changeGlyph, bool roundCoords)
 {
+    PathElt *eM = NULL; // FIXME: remove
     InitAll(STARTUP);
 
     if (!ReadFontInfo(fontinfo))

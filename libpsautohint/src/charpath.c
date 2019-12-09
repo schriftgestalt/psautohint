@@ -31,14 +31,14 @@
 #define FLATTEN 4
 #define GHOST 5
 
-static bool firstMT;
-static Cd* refPtArray = NULL;
+_Thread_local static bool firstMT;
+_Thread_local static Cd* refPtArray = NULL;
 // Note: thread-safe: Passing outbuff as arg.
 //static ACBuffer* outbuff;
-static int masterCount;
-static const char** masterNames;
-static PathList* pathlist = NULL;
-static indx hintsMasterIx = 0; /* The index of the master we read hints from */
+_Thread_local static int masterCount;
+_Thread_local static const char** masterNames;
+_Thread_local static PathList* pathlist = NULL;
+_Thread_local static indx hintsMasterIx = 0; /* The index of the master we read hints from */
 
 /* Prototypes */
 static void GetRelativePosition(Fixed, Fixed, Fixed, Fixed, Fixed, Fixed*);

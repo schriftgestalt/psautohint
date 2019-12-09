@@ -54,6 +54,24 @@ enum
     AC_LogError
 };
 
+#if defined(__has_feature)
+#  if __has_feature(thread_sanitizer)
+/*
+ * Note: ACBuffer internals should be hidden, ACBuffer is only defined
+ *       here when Thread Sanitizer is enabled. Normally in buffer.c.
+ * when hiding struct, Tests.m crashes with Thread Sanitizer (TSan)
+ * in testPerformance...(), but not if Undefined Behavior check enabled.
+ * So, put back in psautohint.h for when using Tsan.
+ */
+#define ACBUFFER_STRUCT_DEFINED
+struct ACBuffer
+{
+    char* data;      /* buffer data, NOT null-terminated */
+    size_t len;      /* actual length of the data */
+    size_t capacity; /* allocated memory size */
+};
+#  endif /* __has_feature(thread_sanitizer) */
+#endif /* __has_feature */
 
 typedef struct ACBuffer ACBuffer;
 

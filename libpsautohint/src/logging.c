@@ -10,11 +10,12 @@
 #include <stdarg.h>
 
 #include "ac.h"
+#include "logging.h"
 
-AC_REPORTFUNCPTR gLibReportCB = NULL;
+_Thread_local AC_REPORTFUNCPTR gLibReportCB = NULL;
 
 /* proc to be called from LogMsg if error occurs */
-static int (*errorproc)(int16_t);
+_Thread_local static int (*errorproc)(int16_t);
 
 void
 set_errorproc(int (*userproc)(int16_t))

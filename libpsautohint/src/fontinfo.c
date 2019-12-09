@@ -9,10 +9,11 @@
 
 #include "fontinfo.h"
 #include "ac.h"
+#include "logging.h"
 
 #define UNDEFINED (INT32_MAX)
 
-int32_t gNumHHints, gNumVHints;
+_Thread_local int32_t gNumHHints, gNumVHints;
 
 static void ParseIntStems(const ACFontInfo* fontinfo, char* kw, bool optional,
                           int32_t maxstems, int* stems, int32_t* pnum);
@@ -317,6 +318,7 @@ FreeFontInfo(ACFontInfo* fontinfo)
     UnallocateMem(fontinfo);
 }
 
+/* thread-safe: should be okay to leave since fontinfo_keys[] is only read from not written to. */
 static char* fontinfo_keys[] = {
     "OrigEmSqUnits", "FontName", "FlexOK",
     /* Blue Values */

@@ -10,6 +10,7 @@
 #include <stdarg.h>
 
 #include "ac.h"
+#include "logging.h"
 
 double
 FixToDbl(Fixed f)
@@ -184,13 +185,16 @@ ShwHV(HintVal* val)
 void
 ShowHVal(HintVal* val)
 {
+#if LOGDEBUG
     Fixed l1, l2, r1, r2;
     Fixed bot, top;
+#endif
     HintSeg* seg = val->vSeg1;
     if (seg == NULL) {
         ShwHV(val);
         return;
     }
+#if LOGDEBUG /* FIXME: Georg: this may not be what you intended as LOGDEBUG == -1 */
     bot = -val->vLoc1;
     top = -val->vLoc2;
     l1 = seg->sMin;
@@ -198,7 +202,6 @@ ShowHVal(HintVal* val)
     seg = val->vSeg2;
     l2 = seg->sMin;
     r2 = seg->sMax;
-#if LOGDEBUG
     LogMsg(LOGDEBUG, OK, "b %g t %g v %g s %g%s l1 %g r1 %g  l2 %g r2 %g",
            FixToDbl(bot), FixToDbl(top), VAL(val->vVal), FixToDbl(val->vSpc),
            val->vGhst ? " G" : "", FixToDbl(l1), FixToDbl(r1), FixToDbl(l2),
@@ -234,13 +237,16 @@ ShwVV(HintVal* val)
 void
 ShowVVal(HintVal* val)
 {
+#if LOGDEBUG
     Fixed b1, b2, t1, t2;
     Fixed lft, rht;
+#endif
     HintSeg* seg = val->vSeg1;
     if (seg == NULL) {
         ShwVV(val);
         return;
     }
+#if LOGDEBUG  /* FIXME: Georg: this may not be what you intended as LOGDEBUG == -1 */
     lft = val->vLoc1;
     rht = val->vLoc2;
     b1 = -seg->sMin;
@@ -248,7 +254,6 @@ ShowVVal(HintVal* val)
     seg = val->vSeg2;
     b2 = -seg->sMin;
     t2 = -seg->sMax;
-#if LOGDEBUG
     LogMsg(LOGDEBUG, OK, "l %g r %g v %g s %g b1 %g t1 %g  b2 %g t2 %g",
            FixToDbl(lft), FixToDbl(rht), VAL(val->vVal), FixToDbl(val->vSpc),
            FixToDbl(b1), FixToDbl(t1), FixToDbl(b2), FixToDbl(t2));
