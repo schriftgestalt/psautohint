@@ -9,11 +9,12 @@
 
 #include "ac.h"
 #include "bbox.h"
+#include "logging.h"
 
 static void DoHStems(HintVal* sLst1);
 static void DoVStems(HintVal* sLst);
 
-static bool CounterFailed;
+_Thread_local static bool CounterFailed;
 
 void
 InitAll(int32_t reason)

@@ -17,7 +17,12 @@
 
 #include "psautohint.h"
 
-#include "logging.h"
+/* For thread-safe versions, LogMsg in logging.[ch] needed to know
+ * about GlobalState. So, included logging.h when LogMsg() was being used.
+ * Later, backed out of passing state around to using _Thread_local, but
+ * left include changes in.
+ */
+// #include "logging.h"
 #include "memory.h"
 
 /* widely used definitions */
@@ -94,7 +99,7 @@ typedef struct _pthelt {
 typedef struct {
   int16_t limit;
   Fixed feps;
-  void (*report)(Cd, PathElt*);
+  void (*report)(Cd);
   Cd ll, ur;
   Fixed llx, lly;
   } FltnRec;
@@ -168,40 +173,40 @@ typedef struct {
 
 /* global data */
 
-//extern ACBuffer* gBezOutput;
+_Thread_local extern ACBuffer* gBezOutput;
 //
-//extern PathElt* gPathStart, *gPathEnd;
-//extern bool gUseV, gUseH, gAutoLinearCurveFix;
-//extern bool gEditGlyph; /* whether glyph can be modified when adding hints */
-//extern bool gBandError;
-//extern bool gHasFlex, gFlexOK, gFlexStrict;
-//extern Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth,
-//  gGhostLength, gBendLength, gBandMargin, gMaxFlare,
-//  gMaxBendMerge, gMaxMerge, gMinHintElementLength, gFlexCand;
-//extern Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
-//extern float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
-//extern int32_t gDMin, gDelta, gCPpercent, gBendTan, gSCurveTan;
-//extern HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
-//extern HintSeg* gSegLists[4]; /* left, right, top, bot */
-//extern HintPoint* gPointList, **gPtLstArray;
-//extern int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
+_Thread_local extern PathElt* gPathStart, *gPathEnd;
+_Thread_local extern bool gUseV, gUseH, gAutoLinearCurveFix;
+_Thread_local extern bool gEditGlyph; /* whether glyph can be modified when adding hints */
+_Thread_local extern bool gBandError;
+_Thread_local extern bool gHasFlex, gFlexOK, gFlexStrict;
+_Thread_local extern Fixed gHBigDist, gVBigDist, gInitBigDist, gMinDist, gGhostWidth,
+  gGhostLength, gBendLength, gBandMargin, gMaxFlare,
+  gMaxBendMerge, gMaxMerge, gMinHintElementLength, gFlexCand;
+_Thread_local extern Fixed gPruneA, gPruneB, gPruneC, gPruneD, gPruneValue, gBonus;
+_Thread_local extern float gTheta, gHBigDistR, gVBigDistR, gMaxVal, gMinVal;
+_Thread_local extern int32_t gDMin, gDelta, gCPpercent, gBendTan, gSCurveTan;
+_Thread_local extern HintVal *gVHinting, *gHHinting, *gVPrimary, *gHPrimary, *gValList;
+_Thread_local extern HintSeg* gSegLists[4]; /* left, right, top, bot */
+_Thread_local extern HintPoint* gPointList, **gPtLstArray;
+_Thread_local extern int32_t gPtLstIndex, gNumPtLsts, gMaxPtLsts;
 
 /* global callbacks */
 
 /* if false, then stems defined by curves are excluded from the reporting */
-extern unsigned int gAllStems;
+_Thread_local extern unsigned int gAllStems;
 
-extern AC_REPORTSTEMPTR gAddHStemCB;
-extern AC_REPORTSTEMPTR gAddVStemCB;
+_Thread_local extern AC_REPORTSTEMPTR gAddHStemCB;
+_Thread_local extern AC_REPORTSTEMPTR gAddVStemCB;
 
-extern AC_REPORTZONEPTR gAddGlyphExtremesCB;
-extern AC_REPORTZONEPTR gAddStemExtremesCB;
+_Thread_local extern AC_REPORTZONEPTR gAddGlyphExtremesCB;
+_Thread_local extern AC_REPORTZONEPTR gAddStemExtremesCB;
 
-extern AC_RETRYPTR gReportRetryCB;
+_Thread_local extern AC_RETRYPTR gReportRetryCB;
 
-extern void* gAddStemUserData;
-extern void* gAddExtremesUserData;
-extern void* gReportRetryUserData;
+_Thread_local extern void* gAddStemUserData;
+_Thread_local extern void* gAddExtremesUserData;
+_Thread_local extern void* gReportRetryUserData;
 
 void AddStemExtremes(Fixed bot, Fixed top);
 
@@ -213,22 +218,22 @@ void AddStemExtremes(Fixed bot, Fixed top);
 #define MAXFLEX (PSDist(20))
 #define MAXBLUES (20)
 #define MAXSERIFS (5)
-extern Fixed gTopBands[MAXBLUES], gBotBands[MAXBLUES], gSerifs[MAXSERIFS];
-extern int32_t gLenTopBands, gLenBotBands, gNumSerifs;
+_Thread_local extern Fixed gTopBands[MAXBLUES], gBotBands[MAXBLUES], gSerifs[MAXSERIFS];
+_Thread_local extern int32_t gLenTopBands, gLenBotBands, gNumSerifs;
 #define MAXSTEMS (20)
-extern Fixed gVStems[MAXSTEMS], gHStems[MAXSTEMS];
-extern int32_t gNumVStems, gNumHStems;
+_Thread_local extern Fixed gVStems[MAXSTEMS], gHStems[MAXSTEMS];
+_Thread_local extern int32_t gNumVStems, gNumHStems;
 extern char *gHHintList[], *gVHintList[];
-extern int32_t gNumHHints, gNumVHints;
-extern bool gWriteHintedBez;
-extern Fixed gBlueFuzz;
-extern bool gDoAligns, gDoStems;
-extern bool gRoundToInt;
-extern bool gAddHints;
+_Thread_local extern int32_t gNumHHints, gNumVHints;
+_Thread_local extern bool gWriteHintedBez;
+_Thread_local extern Fixed gBlueFuzz;
+_Thread_local extern bool gDoAligns, gDoStems;
+_Thread_local extern bool gRoundToInt;
+_Thread_local extern bool gAddHints;
 
 #define MAX_GLYPHNAME_LEN 64
 /* defined in read.c; set from the glyph name at the start of the bex file. */
-extern char gGlyphName[MAX_GLYPHNAME_LEN];
+_Thread_local extern char gGlyphName[MAX_GLYPHNAME_LEN];
 
 /* macros */
 
@@ -299,7 +304,7 @@ void GenVPts(int32_t specialGlyphType, PathElt* eM);
 void CheckTfmVal(HintSeg* hSegList, Fixed* bandList, int32_t length);
 void CheckVals(HintVal* vlst, bool vert);
 bool FindLineSeg(Fixed loc, HintSeg* sL);
-void FltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr, PathElt* eM);
+void FltnCurve(Cd c0, Cd c1, Cd c2, Cd c3, FltnRec* pfr);
 bool InBlueBand(Fixed loc, int32_t n, Fixed* p);
 void GenHPts(PathElt* eM);
 void PreGenPts(void);

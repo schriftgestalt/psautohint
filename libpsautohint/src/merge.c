@@ -523,6 +523,6 @@ MergeVals(bool vert)
         NxtVL:
             vLst = vLst->vNxt;
         }
-        vL = vL->vNxt;
+        vL = vL->vNxt;  /* FIXME: this seems to not be needed?, vL gets set to NULL at top of loop? */
     }
 }

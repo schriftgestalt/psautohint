@@ -9,6 +9,7 @@
 
 #include "psautohint.h"
 
+//#include "ac.h"
 #include "basic.h"
 
 #ifndef BF_LOGGING_H_
@@ -29,8 +30,9 @@
 #define MAXMSGLEN 500
 
 /* global log function which is supplied by the following */
-extern AC_REPORTFUNCPTR gLibReportCB;
+_Thread_local extern AC_REPORTFUNCPTR gLibReportCB;
 
+// HACK: minimize LogMsg changes by making gGlyphName _Thread_local
 void LogMsg(int16_t, int16_t, char *, ...);
 
 void set_errorproc( int (*)(int16_t) );

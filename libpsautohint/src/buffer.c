@@ -13,12 +13,21 @@
 #include "memory.h"
 #include "psautohint.h"
 
+#ifndef ACBUFFER_STRUCT_DEFINED
+/*
+ * Note: ACBuffer internals should be hidden, ACBuffer is only defined
+ *       in psautohint.h when Thread Sanitizer is enabled.
+ * when hiding struct, Tests.m crashes with Thread Sanitizer (TSan)
+ * in testPerformance...(), but not if Undefined Behavior check enabled.
+ * So, put back in psautohint.h for when using Tsan.
+ */
 struct ACBuffer
 {
     char* data;      /* buffer data, NOT null-terminated */
     size_t len;      /* actual length of the data */
     size_t capacity; /* allocated memory size */
 };
+#endif /* ! ACBUFFER_STRUCT_DEFINED */
 
 ACLIB_API ACBuffer*
 ACBufferNew(size_t size)

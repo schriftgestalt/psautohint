@@ -13,10 +13,11 @@
 #include "fontinfo.h"
 #include "psautohint.h"
 #include "version.h"
+#include "logging.h"
 
-ACBuffer* gBezOutput = NULL;
+_Thread_local ACBuffer* gBezOutput = NULL;
 
-static jmp_buf aclibmark; /* to handle exit() calls in the library version*/
+_Thread_local static jmp_buf aclibmark; /* to handle exit() calls in the library version*/
 
 ACLIB_API void
 AC_SetMemManager(void* ctxptr, AC_MEMMANAGEFUNCPTR func)

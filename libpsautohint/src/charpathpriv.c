@@ -14,13 +14,13 @@
 #include "charpath.h"
 #include "memory.h"
 
-int32_t gPathEntries = 0; /* number of elements in a glyph path */
-bool gAddHints = true;    /* whether to include hints in the font */
+_Thread_local int32_t gPathEntries = 0; /* number of elements in a glyph path */
+_Thread_local bool gAddHints = true;    /* whether to include hints in the font */
 
 #define MAXPATHELT 100 /* initial maximum number of path elements */
 
-static int32_t maxPathEntries = 0;
-static PathList* currPathList = NULL;
+_Thread_local static int32_t maxPathEntries = 0;
+_Thread_local static PathList* currPathList = NULL;
 
 static void CheckPath(void);
 

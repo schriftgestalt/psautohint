@@ -10,19 +10,20 @@
 #include <math.h>
 
 #include "ac.h"
+#include "logging.h"
 
 #define WRTABS_COMMENT (0)
 
-static Fixed currentx, currenty;
-static bool firstFlex, wrtHintInfo;
+_Thread_local static Fixed currentx, currenty;
+_Thread_local static bool firstFlex, wrtHintInfo;
 #define MAXBUFFLEN 127
-static char S0[MAXBUFFLEN + 1];
-static HintPoint* bst;
-static char bch;
-static Fixed bx, by;
-static bool bstB;
+//static char S0[MAXBUFFLEN + 1];
+_Thread_local static HintPoint* bst;
+_Thread_local static char bch;
+_Thread_local static Fixed bx, by;
+_Thread_local static bool bstB;
 
-static int writeAbsolute = 0;
+_Thread_local static int writeAbsolute = 0;
 
 int32_t
 FRnd(int32_t x)
@@ -43,6 +44,8 @@ FRnd(int32_t x)
 /* Note: The 8 bit fixed fraction cannot support more than 2 decimal places. */
 #define WRTNUM(i) WriteString("%d ", (int32_t)(i))
 #define WRTRNUM(i) WriteString("%0.2f ", round((double)(i)*100) / 100)
+
+#define DEFWITHGBEZ(name, singleargdef) name(singleargdef)
 
 static void
 wrtx(Fixed x)
@@ -124,8 +127,8 @@ wrtya(Fixed y)
 
 /*To avoid pointless hint subs*/
 #define HINTMAXSTR 2048
-static char hintmaskstr[HINTMAXSTR];
-static char prevhintmaskstr[HINTMAXSTR];
+_Thread_local static char hintmaskstr[HINTMAXSTR];
+_Thread_local static char prevhintmaskstr[HINTMAXSTR];
 
 static void
 safestrcat(char* s1, char* s2)
@@ -141,12 +144,14 @@ safestrcat(char* s1, char* s2)
 
 #define SWRTNUM(i)                                                             \
     {                                                                          \
+        char S0[MAXBUFFLEN + 1];                                               \
         snprintf(S0, MAXBUFFLEN, "%d ", (int32_t)(i));                         \
         sws(S0);                                                               \
     }
 
 #define SWRTNUMA(i)                                                            \
     {                                                                          \
+        char S0[MAXBUFFLEN + 1];                                               \
         snprintf(S0, MAXBUFFLEN, "%0.2f ", roundf((float)(i)*100) / 100);      \
         sws(S0);                                                               \
     }
@@ -344,8 +349,8 @@ dt(Cd c, PathElt* e)
     }
 }
 
-static Fixed flX, flY;
-static Cd fc1, fc2, fc3;
+_Thread_local static Fixed flX, flY;
+_Thread_local static Cd fc1, fc2, fc3;
 
 #define wrtpreflx2(c)                                                          \
     wrtcd(c);                                                                  \

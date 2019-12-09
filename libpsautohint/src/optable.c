@@ -12,6 +12,7 @@
 #include "optable.h"
 #include "ac.h"
 #include "opcodes.h"
+#include "logging.h"
 
 /*
 Not all of the operators from opcodes.h are initialized here; in

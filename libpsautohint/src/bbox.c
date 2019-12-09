@@ -9,12 +9,13 @@
 
 #include "bbox.h"
 #include "ac.h"
+#include "logging.h"
 
-static Fixed xmin, ymin, xmax, ymax, vMn, vMx, hMn, hMx;
-static PathElt *pxmn, *pxmx, *pymn, *pymx, *pe, *pvMn, *pvMx, *phMn, *phMx;
+_Thread_local static Fixed xmin, ymin, xmax, ymax, vMn, vMx, hMn, hMx;
+_Thread_local static PathElt *pxmn, *pxmx, *pymn, *pymx, *pe, *pvMn, *pvMx, *phMn, *phMx;
 
 static void
-FPBBoxPt(Cd c, PathElt* eM)
+FPBBoxPt(Cd c)
 {
     if (c.x < xmin) {
         xmin = c.x;
@@ -57,7 +58,7 @@ FindPathBBox(void)
                 c0.x = e->x;
                 c0.y = e->y;
                 pe = e;
-                FPBBoxPt(c0, eM);
+                FPBBoxPt(c0);
                 break;
             case CURVETO:
                 c1.x = e->x1;
@@ -67,7 +68,7 @@ FindPathBBox(void)
                 c3.x = e->x3;
                 c3.y = e->y3;
                 pe = e;
-                FltnCurve(c0, c1, c2, c3, &fr, eM);
+                FltnCurve(c0, c1, c2, c3, &fr);
                 c0 = c3;
                 break;
             case CLOSEPATH:
@@ -115,7 +116,7 @@ FindSubpathBBox(PathElt* e)
                 c0.x = e->x;
                 c0.y = e->y;
                 pe = e;
-                FPBBoxPt(c0, e);
+                FPBBoxPt(c0);
                 break;
             case CURVETO:
                 c1.x = e->x1;
@@ -125,7 +126,7 @@ FindSubpathBBox(PathElt* e)
                 c3.x = e->x3;
                 c3.y = e->y3;
                 pe = e;
-                FltnCurve(c0, c1, c2, c3, &fr, e);
+                FltnCurve(c0, c1, c2, c3, &fr);
                 c0 = c3;
                 break;
             case CLOSEPATH:
@@ -169,8 +170,8 @@ FindCurveBBox(Fixed x0, Fixed y0, Fixed px1, Fixed py1, Fixed px2, Fixed py2,
     c2.y = py2;
     c3.x = x1;
     c3.y = y1;
-    FPBBoxPt(c0, eM);
-    FltnCurve(c0, c1, c2, c3, &fr, eM);
+    FPBBoxPt(c0);
+    FltnCurve(c0, c1, c2, c3, &fr);
     *pllx = FHalfRnd(xmin);
     *plly = FHalfRnd(ymin);
     *purx = FHalfRnd(xmax);

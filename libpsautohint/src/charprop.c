@@ -8,11 +8,13 @@
  */
 
 #include "ac.h"
+#include "logging.h"
 
 /* number of default entries in counter hint glyph list. */
 #define COUNTERDEFAULTENTRIES 4
 #define COUNTERLISTSIZE 20
 
+/* re: thread-safe: should be okay as only read, not written to. */
 char* gVHintList[] = { "m",  "M",  "T",  "ellipsis", NULL, NULL, NULL,
                        NULL, NULL, NULL, NULL,       NULL, NULL, NULL,
                        NULL, NULL, NULL, NULL,       NULL, NULL };
