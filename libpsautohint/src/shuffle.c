@@ -10,10 +10,9 @@
 #include "ac.h"
 #define MAXCNT (100)
 
-static unsigned char* links;
 static int32_t rowcnt;
 
-void
+unsigned char*
 InitShuffleSubpaths(void)
 {
     int32_t cnt = -1;
@@ -30,12 +29,13 @@ InitShuffleSubpaths(void)
     }
     cnt++;
     rowcnt = cnt;
-    links =
-      (cnt < 4 || cnt >= MAXCNT) ? NULL : (unsigned char*)Alloc(cnt * cnt);
+    if (cnt < 4 || cnt >= MAXCNT)
+        return NULL;
+    return Alloc(cnt * cnt);
 }
 
 static void
-PrintLinks(void)
+PrintLinks(unsigned char* links)
 {
     int32_t i, j;
     LogMsg(LOGDEBUG, OK, "Links ");
@@ -93,7 +93,7 @@ PrintOutLinks(unsigned char* outlinks)
 }
 
 void
-MarkLinks(HintVal* vL, bool hFlg)
+MarkLinks(HintVal* vL, bool hFlg, unsigned char* links)
 {
     int32_t i, j;
     HintSeg* seg;
@@ -157,7 +157,7 @@ Outpath(unsigned char* links, unsigned char* outlinks, unsigned char* output,
  had the most problems with this which caused huge files
  to be created. */
 void
-DoShuffleSubpaths(void)
+DoShuffleSubpaths(unsigned char* links)
 {
     unsigned char sumlinks[MAXCNT], output[MAXCNT], outlinks[MAXCNT];
     unsigned char* lnks;
@@ -167,7 +167,7 @@ DoShuffleSubpaths(void)
     memset(outlinks, 0, MAXCNT * sizeof(unsigned char));
     if (links == NULL)
         return;
-    PrintLinks();
+    PrintLinks(links);
     for (i = 0; i < rowcnt; i++)
         output[i] = sumlinks[i] = outlinks[i] = 0;
     lnks = links;

@@ -345,12 +345,13 @@ GetNewPtLst(void)
     if (gNumPtLsts >= gMaxPtLsts) { /* increase size */
         HintPoint** newArray;
         int32_t i;
-        gMaxPtLsts += 5;
-        newArray = (HintPoint**)Alloc(gMaxPtLsts * sizeof(HintPoint*));
-        for (i = 0; i < gMaxPtLsts - 5; i++) {
+        int32_t newSize = gMaxPtLsts * 2;
+        newArray = (HintPoint**)Alloc(newSize * sizeof(HintPoint*));
+        for (i = 0; i < gMaxPtLsts; i++) {
             newArray[i] = gPtLstArray[i];
         }
         gPtLstArray = newArray;
+        gMaxPtLsts = newSize;
     }
     gPtLstIndex = gNumPtLsts;
     gNumPtLsts++;
@@ -372,7 +373,7 @@ XtraHints(PathElt* e)
 }
 
 static void
-Blues(void)
+Blues(unsigned char* links)
 {
     Fixed pv = 0, pd = 0, pc = 0, pb = 0, pa = 0;
     HintVal* sLst;
@@ -555,7 +556,7 @@ Blues(void)
 
     ShowHVals(gValList);
     LogMsg(LOGDEBUG, OK, "pick best");
-    MarkLinks(gValList, true);
+    MarkLinks(gValList, true, links);
     CheckVals(gValList, false);
 
     /* Report stems and alignment zones, if this has been requested. */
@@ -638,7 +639,7 @@ DoHStems(HintVal* sLst1)
 }
 
 static void
-Yellows(void)
+Yellows(unsigned char* links)
 {
     Fixed pv = 0, pd = 0, pc = 0, pb = 0, pa = 0;
     HintVal* sLst;
@@ -663,7 +664,7 @@ Yellows(void)
     MergeVals(true);
     ShowVVals(gValList);
     LogMsg(LOGDEBUG, OK, "pick best");
-    MarkLinks(gValList, false);
+    MarkLinks(gValList, false, links);
     CheckVals(gValList, true);
 
     if (gDoAligns || gDoStems)
@@ -783,16 +784,18 @@ static void
 AddHintsInnerLoop(const char* srcglyph, bool extrahint)
 {
     int32_t retryHinting = 0;
+    unsigned char* links;
+
     while (true) {
         PreGenPts();
         CheckSmooth();
-        InitShuffleSubpaths();
-        Blues();
+        links = InitShuffleSubpaths();
+        Blues(links);
         if (!gDoAligns) {
-            Yellows();
+            Yellows(links);
         }
         if (gEditGlyph) {
-            DoShuffleSubpaths();
+            DoShuffleSubpaths(links);
         }
         gHPrimary = CopyHints(gHHinting);
         gVPrimary = CopyHints(gVHinting);

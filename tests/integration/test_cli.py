@@ -1,4 +1,5 @@
 import glob
+import os
 from os.path import basename
 import subprocess
 import pytest
@@ -210,7 +211,6 @@ def test_option(path, option, argument, tmpdir):
     "--no-flex",
     "--no-hint-sub",
     "--no-zones-stems",
-    "--print-dflt-fddict",
     "--print-list-fddict",
     "--report-only",
     "--verbose",
@@ -223,6 +223,22 @@ def test_argumentless_option(path, option, tmpdir):
     out = str(tmpdir / basename(path)) + ".out"
 
     autohint([path, '-o', out, option])
+
+
+def test_print_fddict(capsys):
+    dummypath = os.path.join(DATA_DIR, "dummy")
+    fontpath = os.path.join(dummypath, "font.otf")
+    fipath = os.path.join(dummypath, "fontinfo_fdd")
+    exp_path = os.path.join(dummypath, 'print_dflt_fddict_expected.txt')
+
+    with open(exp_path, 'r') as exp_f:
+        expected = exp_f.read()
+        with pytest.raises(SystemExit) as wrapped_exc:
+            autohint([fontpath,
+                      '--print-dflt-fddict',
+                      '--fontinfo-file',
+                      fipath])
+            str(wrapped_exc) == expected
 
 
 @pytest.mark.parametrize("option", [
@@ -272,7 +288,7 @@ def test_invalid_save_path(tmpdir):
 
 @pytest.mark.parametrize("args", [
     pytest.param(['-z'], id="report_zones"),
-    pytest.param([],     id="report_stems"),
+    pytest.param([], id="report_stems"),
     pytest.param(['-a'], id="report_stems,all_stems"),
     pytest.param(['-g', 'a-z,A-Z,zero-nine'], id="report_stems,glyphs"),
 ])
@@ -323,37 +339,6 @@ def test_multi_order_unequal(tmpdir):
 
     with pytest.raises(SystemExit):
         autohint(['-o', out1, out2, in1])
-
-
-def test_legacy_option(capsys, tmpdir):
-    """ Check that a warning is issued when legacy autohint
-    options are used."""
-    inpath = "%s/dummy/font.ufo" % DATA_DIR
-    outpath = str(tmpdir / basename(inpath)) + ".out"
-
-    autohint([inpath, '-o', outpath, '-logOnly', '-xg', 'fake.txt'])
-    captured = capsys.readouterr()
-    expected = (
-        "WARNING: option '-logOnly' is supported only for compatibility with "
-        "the old 'autohint' tool and may be removed in future versions")
-
-    assert expected in captured.err
-
-
-def test_legacy_option_order(capsys, tmpdir):
-    """ Check that boolean legacy options do not consume input path as
-    its args (leading to misleading error)"""
-    path = "%s/dummy/font.ufo" % DATA_DIR
-    out = str(tmpdir / basename(path)) + ".out"
-
-    autohint(['-wd', path, '-o', out])
-    captured = capsys.readouterr()
-    expected = (
-        "WARNING: option '-wd' is supported only for compatibility with "
-        "the old 'autohint' tool and may be removed in future versions")
-
-    assert expected in captured.err
-    assert "the following arguments are required:" not in captured.err
 
 
 def test_lack_of_input_raises(tmpdir):

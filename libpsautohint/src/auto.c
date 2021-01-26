@@ -422,10 +422,13 @@ TryResolveConflict(PathElt* e, bool Hflg)
     lc1 = seg1->sLoc;
     lnk1 = lst;
     lst = lst->next;
+    if (lst == NULL)
+        return false;
     seg2 = lst->lnk->seg;
     lc2 = seg2->sLoc;
     lnk2 = lst;
     if (lc1 == loc1 || lc2 == loc2) {
+        /* do nothing */
     } else if (abs(lc1 - loc1) > abs(lc1 - loc2) ||
                abs(lc2 - loc2) > abs(lc2 - loc1)) {
         seg = seg1;

@@ -70,16 +70,6 @@ def test_cff(cff, tmpdir):
                    str(tmpdir / basename(out)) + ".xml"])
 
 
-def test_autohintexe(tmpdir):
-    path = "%s/dummy/font.ufo" % DATA_DIR
-    out = str(tmpdir / basename(path)) + ".out"
-    options = Options(path, out)
-    options.use_autohintexe = True
-    hintFiles(options)
-
-    assert differ([path, out])
-
-
 tx_found = False
 try:
     subprocess.check_call(["tx", "-h"])
@@ -174,6 +164,18 @@ def test_seac_op(tmpdir, caplog):
 
     msgs = [r.getMessage() for r in caplog.records]
     assert "Skipping Aacute: can't process SEAC composite glyphs." in msgs
+
+
+@pytest.mark.skipif(tx_found is False, reason="'tx' is missing")
+def test_mute_tx_msgs(tmpdir, capfd):
+    path = "%s/dummy/nohints.pfa" % DATA_DIR
+    out = str(tmpdir / basename(path)) + ".out"
+    options = Options(path, out)
+
+    hintFiles(options)
+
+    captured = capfd.readouterr()
+    assert "(cfw) unhinted <.notdef>" not in captured.err
 
 
 @parametrize("path", glob.glob("%s/dummy/bad_privatedict_*" % DATA_DIR))

@@ -382,7 +382,7 @@ ReportHintConflict(Fixed x0, Fixed y0, Fixed x1, Fixed y1, char ch)
     char s[2];
     s[0] = ch;
     s[1] = 0;
-    LogMsg(LOGERROR, OK, "  Conflicts with current hints: %g %g %g %g %s.",
+    LogMsg(LOGDEBUG, OK, "  Conflicts with current hints: %g %g %g %g %s.",
            FixToDbl(x0), FixToDbl(y0), FixToDbl(x1), FixToDbl(y1), s);
 }
 
@@ -396,7 +396,7 @@ ReportDuplicates(Fixed x, Fixed y)
 void
 ReportBBoxBogus(Fixed llx, Fixed lly, Fixed urx, Fixed ury)
 {
-    LogMsg(WARNING, OK, "Glyph bounding box looks bogus: %g %g %g %g.",
+    LogMsg(INFO, OK, "Glyph bounding box looks bogus: %g %g %g %g.",
            FixToDbl(llx), FixToDbl(lly), FixToDbl(urx), FixToDbl(ury));
 }
 

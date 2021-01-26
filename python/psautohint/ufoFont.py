@@ -427,7 +427,9 @@ class UFOFontData:
                 shutil.rmtree(path)
             shutil.copytree(self.path, path)
 
-        writer = UFOWriter(path, self._reader.formatVersion, validate=False)
+        writer = UFOWriter(path,
+                           self._reader.formatVersionTuple,
+                           validate=False)
 
         layer = PROCESSED_LAYER_NAME
         if self.writeToDefaultLayer:
@@ -682,7 +684,6 @@ class UFOFontData:
             setattr(fdDict, key, value)
 
         otherBlues = self.fontInfo.get("postscriptOtherBlues", [])
-        numBlueValues = len(otherBlues)
 
         if len(otherBlues) > 0:
             i = 0
@@ -1253,7 +1254,6 @@ def makeHintSet(hints, hintsStem3, isH):
         hintLimit = int((STACK_LIMIT - 2) / 2)
         if numHints >= hintLimit:
             hintsStem3 = hintsStem3[:hintLimit]
-            numHints = hintLimit
         hintset.append(makeStemHintList(hintsStem3, isH))
     else:
         hints.sort()
@@ -1261,7 +1261,6 @@ def makeHintSet(hints, hintsStem3, isH):
         hintLimit = int((STACK_LIMIT - 2) / 2)
         if numHints >= hintLimit:
             hints = hints[:hintLimit]
-            numHints = hintLimit
         hintset.extend(makeHintList(hints, isH))
 
     return hintset

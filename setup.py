@@ -10,20 +10,8 @@ from distutils.sysconfig import customize_compiler as _customize_compiler
 from distutils.dep_util import newer_group
 from distutils.ccompiler import show_compilers
 
-from distutils.command.build import build as _build
-from setuptools.command.sdist import sdist as _sdist
 from setuptools.command.build_clib import build_clib as _build_clib
-from setuptools.command.install import install as _install
-from setuptools.command.install_lib import install_lib as _install_lib
 from setuptools.command.build_ext import build_ext as _build_ext
-
-
-class CustomBuildExt(_build_ext):
-
-    def run(self):
-        if self.distribution.has_c_libraries():
-            self.run_command("build_clib")
-        _build_ext.run(self)
 
 
 class Executable(Extension):
@@ -104,9 +92,10 @@ class build_exe(Command):
          "forcibly build everything (ignore file timestamps)"),
         ('compiler=', 'c',
          "specify the compiler type"),
+        ('asan', None, 'debug + Address Sanitizer'),
     ]
 
-    boolean_options = ['inplace', 'debug', 'force']
+    boolean_options = ['inplace', 'debug', 'force', 'asan']
 
     help_options = [
         ('help-compiler', None,
@@ -130,6 +119,7 @@ class build_exe(Command):
         self.debug = None
         self.force = None
         self.compiler = None
+        self.asan = None
 
     def finalize_options(self):
         self.set_undefined_options('build',
@@ -156,6 +146,18 @@ class build_exe(Command):
             self.rpath = []
         elif isinstance(self.rpath, str):
             self.rpath = self.rpath.split(os.pathsep)
+
+        if self.asan:
+            # implies debug
+            self.debug = 1
+
+            asancflags = " -O0 -g -fsanitize=address"
+            cflags = os.environ.get('CFLAGS', '') + asancflags
+            os.environ['CFLAGS'] = cflags
+
+            asanldflags = " -fsanitize=address -shared-libasan"
+            ldflags = os.environ.get('LDFLAGS', '') + asanldflags
+            os.environ['LDFLAGS'] = ldflags
 
         # for executables under windows use different directories
         # for Release and Debug builds.
@@ -237,8 +239,8 @@ class build_exe(Command):
         Raise DistutilsSetupError if the structure is invalid anywhere;
         just returns otherwise.
         """
-        if (not isinstance(executables, list)
-                or not all(isinstance(e, Executable) for e in executables)):
+        if (not isinstance(executables, list) or
+                not all(isinstance(e, Executable) for e in executables)):
             raise DistutilsSetupError(
                 "'executables' option must be a list of Extension instances")
 
@@ -360,61 +362,6 @@ class build_exe(Command):
         return os.path.join(*exe_path) + exe_suffix
 
 
-class CustomSdist(_sdist):
-    """Adds all executables 'sources' and 'depends' files to the manifest.
-    """
-
-    command_name = "sdist"
-
-    def _add_defaults_executables(self):
-        if self.distribution.has_executables():
-            build_exe = self.get_finalized_command('build_exe')
-            self.filelist.extend(build_exe.get_source_files())
-
-    def add_defaults(self):
-        _sdist.add_defaults()
-        self._add_defaults_executables()
-
-
-class CustomBuild(_build):
-    """Runs 'build_exe' sub-command if any executables are defined for
-    the current distribution.
-    """
-
-    command_name = "build"
-
-    user_options = _build.user_options + [
-        ('asan', None, 'debug + Address Sanitizer')
-    ]
-
-    boolean_options = _build.boolean_options + ['asan']
-
-    def initialize_options(self):
-        _build.initialize_options(self)
-        self.asan = None
-
-    def finalize_options(self):
-        _build.finalize_options(self)
-        if self.asan:
-            # implies debug
-            self.debug = 1
-
-            asancflags = " -O0 -g -fsanitize=address"
-            cflags = os.environ.get('CFLAGS', '') + asancflags
-            os.environ['CFLAGS'] = cflags
-
-            asanldflags = " -fsanitize=address -shared-libasan"
-            ldflags = os.environ.get('LDFLAGS', '') + asanldflags
-            os.environ['LDFLAGS'] = ldflags
-
-    def has_executables(self):
-        return self.distribution.has_executables()
-
-    sub_commands = _build.sub_commands + [
-        ('build_exe', has_executables),
-    ]
-
-
 class CustomBuildClib(_build_clib):
     """Includes in the sdist all the libraries' headers (filenames
     specified in the 'obj_deps' dict of a library's build_info dict).
@@ -455,9 +402,9 @@ class CustomBuildClib(_build_clib):
             sources = build_info.get('sources')
             if sources is None or not isinstance(sources, (list, tuple)):
                 raise DistutilsSetupError(
-                       "in 'libraries' option (library '%s'), "
-                       "'sources' must be present and must be "
-                       "a list of source filenames" % lib_name)
+                    "in 'libraries' option (library '%s'), "
+                    "'sources' must be present and must be "
+                    "a list of source filenames" % lib_name)
             sources = list(sources)
 
             log.info("building '%s' library", lib_name)
@@ -482,64 +429,19 @@ class CustomBuildClib(_build_clib):
                                             debug=self.debug)
 
 
-class CustomInstall(_install):
-    """Sets 'install_lib' option to 'install_platlib' if distribution
-    contains any executables.
-    """
+class CustomBuildExt(_build_ext):
 
-    def finalize_options(self):
-        _install.finalize_options(self)
-        if self.distribution.has_executables():
-            self.install_lib = self.install_platlib
-
-
-class CustomInstallLib(_install_lib):
-    """Runs 'build_exe' if distribution contains any executables
-    """
-
-    def build(self):
-        _install_lib.build(self)
-        if not self.skip_build:
-            if self.distribution.has_executables():
-                self.run_command('build_exe')
-
-    def get_outputs(self):
-        outputs = _install_lib.get_outputs(self)
-
-        exe_outputs = self._mutate_outputs(
-            self.distribution.has_executables(),
-            'build_exe', 'build_lib', self.install_dir)
-
-        return outputs + exe_outputs
+    def run(self):
+        if self.distribution.has_c_libraries():
+            self.run_command("build_clib")
+        _build_ext.run(self)
 
 
 cmdclass = {
-    'build': CustomBuild,
     'build_clib': CustomBuildClib,
     'build_ext': CustomBuildExt,
     'build_exe': build_exe,
-    'sdist': CustomSdist,
-    'install': CustomInstall,
-    'install_lib': CustomInstallLib,
 }
-
-
-try:
-    from wheel.bdist_wheel import bdist_wheel
-except ImportError:
-    pass
-else:
-
-    class CustomBDistWheel(bdist_wheel):
-        """Marks the wheel as non-pure if distribution contains any executables
-        """
-
-        def finalize_options(self):
-            bdist_wheel.finalize_options(self)
-            if self.distribution.has_executables():
-                self.root_is_pure = False
-
-    cmdclass['bdist_wheel'] = CustomBDistWheel
 
 
 libraries = [

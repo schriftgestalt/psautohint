@@ -142,7 +142,7 @@ typedef struct _pthelt {
   int16_t type;
   SegLnkLst *Hs, *Vs;
   bool Hcopy:1, Vcopy:1, isFlex:1, yFlex:1, newCP:1;
-  int unused:9;
+  unsigned int unused:9;
   int16_t count, newhints;
   Fixed x, y, x1, y1, x2, y2, x3, y3;
   } PathElt;
@@ -370,9 +370,9 @@ void ReportMergeVVal(Fixed l0, Fixed r0, Fixed l1, Fixed r1, Fixed v0, Fixed s0,
                      Fixed v1, Fixed s1);
 void ReportPruneHVal(HintVal* val, HintVal* v, int32_t i);
 void ReportPruneVVal(HintVal* val, HintVal* v, int32_t i);
-void InitShuffleSubpaths(void);
-void MarkLinks(HintVal* vL, bool hFlg);
-void DoShuffleSubpaths(void);
+unsigned char* InitShuffleSubpaths(void);
+void MarkLinks(HintVal* vL, bool hFlg, unsigned char* links);
+void DoShuffleSubpaths(unsigned char* links);
 void CopyMainH(void);
 void CopyMainV(void);
 void RMovePoint(Fixed dx, Fixed dy, int32_t whichcp, PathElt* e);

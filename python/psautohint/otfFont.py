@@ -25,6 +25,8 @@ import fontTools.subset.cff
 
 from . import fdTools, FontParseError
 
+# keep linting tools quiet about unused import
+assert fontTools.subset.cff is not None
 
 log = logging.getLogger(__name__)
 
@@ -411,7 +413,6 @@ def _add_cntr_maskHints(counter_mask_list, src_hints, is_h):
     for arg_list in src_hints:
         for mask in counter_mask_list:
             dst_hints = mask.h_list if is_h else mask.v_list
-            overlap_status = kHintArgsNoOverlap
             if not dst_hints:
                 dst_hints.extend(arg_list)
                 overlap_status = kHintArgsMatch
@@ -473,8 +474,9 @@ def build_hint_order(hints):
 def make_abs(hint_pair):
     bottom_edge, delta = hint_pair
     new_hint_pair = [bottom_edge, delta]
-    if delta in [-20, -21]:
-        new_hint_pair[0] = bottom_edge + delta
+    if delta in [-20, -21]:  # It is a ghost hint!
+        # We use this only in comparing overlap and order:
+        # pretend the delta is 0, as it isn't a real value.
         new_hint_pair[1] = bottom_edge
     else:
         new_hint_pair[1] = bottom_edge + delta
@@ -495,11 +497,11 @@ def check_hint_pairs(hint_pairs, mm_hint_info, last_idx=0):
     # and pairs in a hint group must not overlap.
 
     # check order first
-    hint_list = [make_abs(hint_pair) for hint_pair in hint_pairs]
     bad_hint_idxs = set()
-    prev = hint_list[0]
-    for i, hint_pair in enumerate(hint_list[1:], 1):
+    prev = hint_pairs[0]
+    for i, hint_pair in enumerate(hint_pairs[1:], 1):
         if prev[0] > hint_pair[0]:
+            # If there is a conflict, we drop the previous hint
             bad_hint_idxs.add(i + last_idx - 1)
         prev = hint_pair
 
@@ -513,6 +515,7 @@ def check_hint_pairs(hint_pairs, mm_hint_info, last_idx=0):
             hint_list = [make_abs(hint_pair) for hint_pair in hint_list]
             check_hint_overlap(hint_list, last_idx, bad_hint_idxs)
     else:
+        hint_list = [make_abs(hint_pair) for hint_pair in hint_pairs]
         check_hint_overlap(hint_list, last_idx, bad_hint_idxs)
 
     if bad_hint_idxs:
@@ -714,10 +717,8 @@ def convertBezToT2(bezString, mm_hint_info=None):
         hint_limit = int((kStackLimit - 2) / 2)
         if num_hhints >= hint_limit:
             hhints = hhints[:hint_limit]
-            num_hhints = hint_limit
         if num_vhints >= hint_limit:
             vhints = vhints[:hint_limit]
-            num_vhints = hint_limit
 
         if mm_hint_info and mm_hint_info.defined:
             check_hint_pairs(hhints, mm_hint_info)
@@ -806,7 +807,7 @@ def convertBezToT2(bezString, mm_hint_info=None):
 
 def _run_tx(args):
     try:
-        subprocess.check_call(["tx"] + args)
+        subprocess.check_call(["tx"] + args, stderr=subprocess.DEVNULL)
     except (subprocess.CalledProcessError, OSError) as e:
         raise FontParseError(e)
 
@@ -870,7 +871,7 @@ class CFFFontData:
         if font_format == "OTF":
             # It is an OTF font, we can process it directly.
             font = TTFont(path)
-            if "CFF "in font:
+            if "CFF " in font:
                 cff_format = "CFF "
             elif "CFF2" in font:
                 cff_format = "CFF2"
@@ -905,11 +906,16 @@ class CFFFontData:
         self.topDict = self.cffTable.cff.topDictIndex[0]
         self.charStrings = self.topDict.CharStrings
         if 'fvar' in self.ttFont:
+            # have not yet collected VF global data.
             self.is_vf = True
             fvar = self.ttFont['fvar']
             CFF2 = self.cffTable
             CFF2.desubroutinize()
             topDict = CFF2.cff.topDictIndex[0]
+            # We need a new charstring object into which we can save the
+            # hinted CFF2 program data. Copying an existing charstring is a
+            # little easier than creating a new one and making sure that all
+            # properties are set correctly.
             self.temp_cs = copy.deepcopy(self.charStrings['.notdef'])
             self.vs_data_models = self.get_vs_data_models(topDict,
                                                           fvar)
@@ -947,7 +953,7 @@ class CFFFontData:
         try:
             bezString, t2Wdth = convertT2GlyphToBez(t2CharString,
                                                     read_hints, round_coords)
-            # Note: the glyph name is important, as it is used by autohintexe
+            # Note: the glyph name is important, as it is used by the C-code
             # for various heuristics, including [hv]stem3 derivation.
             bezString = "% " + glyphName + "\n" + bezString
         except SEACError:
@@ -1220,7 +1226,7 @@ class CFFFontData:
 
                 elif token[:5] == 'hstem':
                     h_hint_args = program[:idx]
-                    v_program = program[idx+1:]
+                    v_program = program[idx + 1:]
 
                     for j, vtoken in enumerate(v_program):
                         if type(vtoken) is str:
@@ -1349,22 +1355,7 @@ class CFFFontData:
             t2CharString.program = program
 
     def get_vf_bez_glyphs(self, glyph_name):
-
         charstring = self.charStrings[glyph_name]
-        if 'fvar' in self.ttFont:
-            # have not yet collected VF global data.
-            self.is_vf = True
-            fvar = self.ttFont['fvar']
-            CFF2 = self.cffTable
-            CFF2.desubroutinize()
-            topDict = CFF2.cff.topDictIndex[0]
-            # We need a new charstring object into which we can save the
-            # hinted CFF2 program data. Copying an existing charstring is a
-            # little easier than creating a new one and making sure that all
-            # properties are set correctly.
-            self.temp_cs = copy.deepcopy(self.charStrings['.notdef'])
-            self.vs_data_models = self.get_vs_data_models(topDict,
-                                                          fvar)
 
         if 'vsindex' in charstring.program:
             op_index = charstring.program.index('vsindex')
@@ -1487,7 +1478,7 @@ def get_scalars(self, vsindex, region_idx):
     for idx in range(region_idx):  # omit the scalar for the region.
         scalar = self._getScalar(region_index[idx])
         if scalar:
-            scalars[idx+1] = scalar
+            scalars[idx + 1] = scalar
     return scalars
 
 
